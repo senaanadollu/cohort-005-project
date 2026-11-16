@@ -380,7 +380,7 @@ function getPurchaseForCourse(userId: number, courseId: number) {
     .get();
 }
 
-function getRequestedRefund(purchaseId: number) {
+function getOpenRefundRequest(purchaseId: number) {
   return db
     .select({ id: refunds.id })
     .from(refunds)
@@ -451,7 +451,7 @@ function getRefundOffer(
   const purchase = getPurchaseForCourse(userId, course.id);
 
   if (!purchase) return null;
-  if (getRequestedRefund(purchase.id)) return null;
+  if (getOpenRefundRequest(purchase.id)) return null;
 
   const purchasedDay = asDayString(new Date(purchase.createdAt));
   const windowEnd = new Date(purchase.createdAt);

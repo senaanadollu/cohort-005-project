@@ -69,7 +69,7 @@ The 14 calendar days after the day of a Purchase, during which a Refund Request 
 _Avoid_: Cancellation period, Grace period, Money-back period
 
 **Refund Eligibility**:
-Whether a Purchase can have a Refund Request made on it, judged at the moment the request is made: it is inside the Refund Window, the Student has watched less than two hours and completed less than half of the Course, none of its Team Seats has been claimed, and the Student has never had an Issued Refund for that Course before. Nothing that happens while the Refund Request is Pending changes it.
+Whether a Purchase can have a Refund Request made on it, judged at the moment the request is made: it is inside the Refund Window, the Student has watched less than two hours and completed less than half of the Course, none of its Team Seats has been claimed, and the Student has never had an Issued Refund for that Course before. Nothing that happens while the Refund Request is Open changes it.
 _Avoid_: Cancellation rules
 
 **Refund Amount**:
@@ -78,11 +78,11 @@ _Avoid_: Reversal amount
 
 ### Refund Request statuses
 
-A Refund Request only ever moves from Pending to Approved or Declined, and stays there.
+A Refund Request only ever moves from Open to Approved or Declined, and stays there.
 
-**Pending** (Refund Request):
+**Open**:
 A Refund Request an Admin has not yet approved or declined.
-_Avoid_: Requested, Under review, In progress, Open
+_Avoid_: Pending, Requested, Under review, In progress
 
 **Approved**:
 A Refund Request an Admin has accepted. It creates a Refund and stays Approved whatever then happens to that Refund.
@@ -94,11 +94,11 @@ _Avoid_: Rejected, Denied, Refused
 
 ### Refund statuses
 
-A Refund moves from Pending to Issued or Failed. These are the Refund's own statuses, separate from the Refund Request's. Because both have a Pending status, always say which one: a "Pending Refund Request" is waiting for an Admin, a "Pending Refund" is waiting for the payment processor. Never say "pending" on its own.
+A Refund moves from Pending to Issued or Failed. These are the Refund's own statuses, separate from the Refund Request's. "Pending" belongs only to a Refund; a Refund Request that is waiting for an Admin is Open, never Pending.
 
-**Pending** (Refund):
+**Pending**:
 A Refund that has been sent to the payment processor but not yet confirmed.
-_Avoid_: Processing, In progress, Sent
+_Avoid_: Processing, In progress, Sent, Open
 
 **Issued**:
 A Refund the payment processor has confirmed: the money has moved back to the Student.
