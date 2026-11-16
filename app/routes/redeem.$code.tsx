@@ -11,7 +11,7 @@ import { Button } from "~/components/ui/button";
 import { Ticket, AlertCircle, CheckCircle2, Globe } from "lucide-react";
 import { data } from "react-router";
 import { db } from "~/db";
-import { purchases, coupons, courses, enrollments } from "~/db/schema";
+import { purchases, teamSeats, courses, enrollments } from "~/db/schema";
 import { eq, and } from "drizzle-orm";
 
 function getCourseById(id: number) {
@@ -19,7 +19,7 @@ function getCourseById(id: number) {
 }
 
 function getCouponByCode(code: string) {
-  return db.select().from(coupons).where(eq(coupons.code, code)).get();
+  return db.select().from(teamSeats).where(eq(teamSeats.code, code)).get();
 }
 
 function isUserEnrolled(userId: number, courseId: number) {
@@ -48,7 +48,7 @@ function redeemCoupon(
     return { ok: false, error: "Coupon not found" };
   }
 
-  if (coupon.redeemedByUserId !== null) {
+  if (coupon.claimedByUserId !== null) {
     return { ok: false, error: "Coupon has already been redeemed" };
   }
 
@@ -81,12 +81,12 @@ function redeemCoupon(
     };
   }
 
-  db.update(coupons)
+  db.update(teamSeats)
     .set({
-      redeemedByUserId: userId,
-      redeemedAt: new Date().toISOString(),
+      claimedByUserId: userId,
+      claimedAt: new Date().toISOString(),
     })
-    .where(eq(coupons.id, coupon.id))
+    .where(eq(teamSeats.id, coupon.id))
     .run();
 
   const enrollment = db
@@ -134,7 +134,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw data("Course not found.", { status: 404 });
   }
 
-  const alreadyRedeemed = coupon.redeemedByUserId !== null;
+  const alreadyRedeemed = coupon.claimedByUserId !== null;
   const alreadyEnrolled = isUserEnrolled(currentUserId, coupon.courseId);
 
   // Check country mismatch upfront so we can show a clear message

@@ -73,9 +73,11 @@ async function seed() {
     DROP TABLE IF EXISTS quiz_questions;
     DROP TABLE IF EXISTS quizzes;
     DROP TABLE IF EXISTS lesson_progress;
+    DROP TABLE IF EXISTS team_seats;
     DROP TABLE IF EXISTS coupons;
     DROP TABLE IF EXISTS team_members;
     DROP TABLE IF EXISTS teams;
+    DROP TABLE IF EXISTS refund_requests;
     DROP TABLE IF EXISTS refunds;
     DROP TABLE IF EXISTS purchases;
     DROP TABLE IF EXISTS enrollments;
@@ -2319,7 +2321,7 @@ This course is still in draft while the cluster examples are rewritten against t
   ];
 
   const seededCoupons = db
-    .insert(schema.coupons)
+    .insert(schema.teamSeats)
     .values(
       couponCodes.map((code) => ({
         teamId: team1.id,
@@ -2332,28 +2334,28 @@ This course is still in draft while the cluster examples are rewritten against t
     .returning()
     .all();
 
-  // Redeem 2 of the 5 coupons. Redeemers are named by email, not by position in
+  // Claim 2 of the 5 Team Seats. Claimers are named by email, not by position in
   // the students array — position would silently re-point these redemptions at
   // different people the moment a student is inserted rather than appended.
   // Both already have an enrolment for course 2 from the enrolments section.
-  db.update(schema.coupons)
+  db.update(schema.teamSeats)
     .set({
-      redeemedByUserId: studentByEmail("olivia.martinez@student.dev").id,
-      redeemedAt: daysAgo(30),
+      claimedByUserId: studentByEmail("olivia.martinez@student.dev").id,
+      claimedAt: daysAgo(30),
     })
-    .where(eq(schema.coupons.id, seededCoupons[0].id))
+    .where(eq(schema.teamSeats.id, seededCoupons[0].id))
     .run();
 
-  db.update(schema.coupons)
+  db.update(schema.teamSeats)
     .set({
-      redeemedByUserId: studentByEmail("liam@example.com").id,
-      redeemedAt: daysAgo(25),
+      claimedByUserId: studentByEmail("liam@example.com").id,
+      claimedAt: daysAgo(25),
     })
-    .where(eq(schema.coupons.id, seededCoupons[1].id))
+    .where(eq(schema.teamSeats.id, seededCoupons[1].id))
     .run();
 
   console.log(
-    `Created 1 team with Bossy McBossface as admin, 1 team purchase, and ${seededCoupons.length} coupons (${countRows(schema.coupons, isNotNull(schema.coupons.redeemedByUserId))} redeemed, ${countRows(schema.coupons, isNull(schema.coupons.redeemedByUserId))} available).`
+    `Created 1 team with Bossy McBossface as admin, 1 team purchase, and ${seededCoupons.length} team seats (${countRows(schema.teamSeats, isNotNull(schema.teamSeats.claimedByUserId))} claimed, ${countRows(schema.teamSeats, isNull(schema.teamSeats.claimedByUserId))} available).`
   );
 
   // ─── Generated history ───
@@ -2649,7 +2651,7 @@ This course is still in draft while the cluster examples are rewritten against t
       .all();
 
     const teamCoupons = db
-      .insert(schema.coupons)
+      .insert(schema.teamSeats)
       .values(
         Array.from({ length: seats }, (_, i) => ({
           teamId: team.id,
@@ -2667,12 +2669,12 @@ This course is still in draft while the cluster examples are rewritten against t
       const redeemer = studentByEmail(email);
       const redeemedDaysAgo = Math.max(0, purchasedDaysAgo - (i + 1) * 2);
 
-      db.update(schema.coupons)
+      db.update(schema.teamSeats)
         .set({
-          redeemedByUserId: redeemer.id,
-          redeemedAt: daysAgo(redeemedDaysAgo),
+          claimedByUserId: redeemer.id,
+          claimedAt: daysAgo(redeemedDaysAgo),
         })
-        .where(eq(schema.coupons.id, teamCoupons[i].id))
+        .where(eq(schema.teamSeats.id, teamCoupons[i].id))
         .run();
 
       db.insert(schema.teamMembers)
@@ -2824,7 +2826,7 @@ This course is still in draft while the cluster examples are rewritten against t
     `  Purchases: ${countRows(schema.purchases)} (${countRows(schema.purchases, gte(schema.purchases.createdAt, sevenDaysAgo))} in the last 7 days), spanning ${historyDays} days`
   );
   console.log(
-    `  Teams: ${countRows(schema.teams)}, coupons: ${countRows(schema.coupons)} (${countRows(schema.coupons, isNotNull(schema.coupons.redeemedByUserId))} redeemed)`
+    `  Teams: ${countRows(schema.teams)}, team seats: ${countRows(schema.teamSeats)} (${countRows(schema.teamSeats, isNotNull(schema.teamSeats.claimedByUserId))} claimed)`
   );
 }
 

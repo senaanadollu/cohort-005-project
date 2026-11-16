@@ -15,11 +15,11 @@ import {
   lessonProgress,
   courseRatings,
   purchases,
-  coupons,
-  refunds,
+  teamSeats,
+  refundRequests,
   videoWatchEvents,
   LessonProgressStatus,
-  RefundStatus,
+  RefundRequestStatus,
 } from "~/db/schema";
 import { eq, and, or, sql, inArray, isNotNull } from "drizzle-orm";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
@@ -382,12 +382,12 @@ function getPurchaseForCourse(userId: number, courseId: number) {
 
 function getOpenRefundRequest(purchaseId: number) {
   return db
-    .select({ id: refunds.id })
-    .from(refunds)
+    .select({ id: refundRequests.id })
+    .from(refundRequests)
     .where(
       and(
-        eq(refunds.purchaseId, purchaseId),
-        eq(refunds.status, RefundStatus.Requested)
+        eq(refundRequests.purchaseId, purchaseId),
+        eq(refundRequests.status, RefundRequestStatus.Open)
       )
     )
     .get();
@@ -477,10 +477,10 @@ function getRefundOffer(
   }
 
   const claimedSeat = db
-    .select({ id: coupons.id })
-    .from(coupons)
+    .select({ id: teamSeats.id })
+    .from(teamSeats)
     .where(
-      and(eq(coupons.purchaseId, purchase.id), isNotNull(coupons.redeemedAt))
+      and(eq(teamSeats.purchaseId, purchase.id), isNotNull(teamSeats.claimedAt))
     )
     .get();
 

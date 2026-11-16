@@ -5,14 +5,14 @@ import { getCurrentUserId } from "~/lib/session";
 import { db } from "~/db";
 import {
   courses,
-  coupons,
+  teamSeats,
   lessons,
   modules,
   purchases,
-  refunds,
+  refundRequests,
   users,
   videoWatchEvents,
-  RefundStatus,
+  RefundRequestStatus,
 } from "~/db/schema";
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { parseFormData, parseParams } from "~/lib/validation";
@@ -61,11 +61,11 @@ function getLessonIdsForCourse(courseId: number): number[] {
 function getOpenRefundRequest(purchaseId: number) {
   return db
     .select()
-    .from(refunds)
+    .from(refundRequests)
     .where(
       and(
-        eq(refunds.purchaseId, purchaseId),
-        eq(refunds.status, RefundStatus.Requested)
+        eq(refundRequests.purchaseId, purchaseId),
+        eq(refundRequests.status, RefundRequestStatus.Open)
       )
     )
     .get();
@@ -150,10 +150,10 @@ export async function action({ params, request }: Route.ActionArgs) {
   // A seat that came out of a team licence, and has been claimed, belongs to
   // the team — the student cannot hand it back on their own.
   const claimedSeat = db
-    .select({ id: coupons.id })
-    .from(coupons)
+    .select({ id: teamSeats.id })
+    .from(teamSeats)
     .where(
-      and(eq(coupons.purchaseId, purchase.id), isNotNull(coupons.redeemedAt))
+      and(eq(teamSeats.purchaseId, purchase.id), isNotNull(teamSeats.claimedAt))
     )
     .get();
 
@@ -213,10 +213,10 @@ export async function action({ params, request }: Route.ActionArgs) {
   }
 
   db
-    .insert(refunds)
+    .insert(refundRequests)
     .values({
       purchaseId: purchase.id,
-      status: RefundStatus.Requested,
+      status: RefundRequestStatus.Open,
       reason: parsed.data.reason,
     })
     .returning()

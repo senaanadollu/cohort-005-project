@@ -10,7 +10,7 @@ import { db } from "~/db";
 import {
   teams,
   teamMembers,
-  coupons,
+  teamSeats,
   courses,
   users,
   TeamMemberRole,
@@ -35,7 +35,7 @@ function getTeamForAdmin(userId: number) {
 }
 
 function getCouponsForTeam(teamId: number) {
-  return db.select().from(coupons).where(eq(coupons.teamId, teamId)).all();
+  return db.select().from(teamSeats).where(eq(teamSeats.teamId, teamId)).all();
 }
 
 function getCourseById(id: number) {
@@ -112,7 +112,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     }
     const entry = courseMap.get(coupon.courseId)!;
     entry.total++;
-    if (coupon.redeemedByUserId !== null) {
+    if (coupon.claimedByUserId !== null) {
       entry.claimed++;
     }
   }
@@ -130,8 +130,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Build coupon rows with redeemer email
   const couponRows: CouponRow[] = allCoupons.map((coupon) => {
     let redeemedByEmail: string | null = null;
-    if (coupon.redeemedByUserId !== null) {
-      const user = getUserById(coupon.redeemedByUserId);
+    if (coupon.claimedByUserId !== null) {
+      const user = getUserById(coupon.claimedByUserId);
       redeemedByEmail = user?.email ?? null;
     }
     const course = getCourseById(coupon.courseId);
