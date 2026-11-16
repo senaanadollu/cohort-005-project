@@ -230,7 +230,7 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
                     {refundRequest.courseTitle}
                   </Link>
                   <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                    Pending
+                    Pending Refund Request
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
