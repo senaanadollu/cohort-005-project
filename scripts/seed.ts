@@ -111,7 +111,7 @@ async function seed() {
   // cohort generated further down, which supplies volume. Anything that picks a
   // student out of a list does it by email, never by array position — see
   // studentByEmail — so appending or inserting students never silently
-  // re-points a coupon redemption at someone else.
+  // re-points a seat claim at someone else.
 
   const [admin] = db
     .insert(schema.users)
@@ -2280,8 +2280,8 @@ This course is still in draft while the cluster examples are rewritten against t
 
   console.log(`Created ${countRows(schema.purchases)} individual purchases.`);
 
-  // ─── Teams, Team Members, and Coupons ───
-  // Bossy McBossface bought 5 team seats for course 2; Olivia and Liam redeemed coupons
+  // ─── Teams, Team Members, and Team Seats ───
+  // Bossy McBossface bought 5 team seats for course 2; Olivia and Liam claimed seats
 
   const [team1] = db
     .insert(schema.teams)
@@ -2311,8 +2311,8 @@ This course is still in draft while the cluster examples are rewritten against t
     .returning()
     .all();
 
-  // Generate 5 coupons for the team purchase
-  const couponCodes = [
+  // Generate 5 team seats for the team purchase
+  const seatCodes = [
     "TEAM-NODEJS-A1B2C3",
     "TEAM-NODEJS-D4E5F6",
     "TEAM-NODEJS-G7H8I9",
@@ -2320,10 +2320,10 @@ This course is still in draft while the cluster examples are rewritten against t
     "TEAM-NODEJS-M3N4O5",
   ];
 
-  const seededCoupons = db
+  const seededSeats = db
     .insert(schema.teamSeats)
     .values(
-      couponCodes.map((code) => ({
+      seatCodes.map((code) => ({
         teamId: team1.id,
         courseId: course2.id,
         code,
@@ -2343,7 +2343,7 @@ This course is still in draft while the cluster examples are rewritten against t
       claimedByUserId: studentByEmail("olivia.martinez@student.dev").id,
       claimedAt: daysAgo(30),
     })
-    .where(eq(schema.teamSeats.id, seededCoupons[0].id))
+    .where(eq(schema.teamSeats.id, seededSeats[0].id))
     .run();
 
   db.update(schema.teamSeats)
@@ -2351,11 +2351,11 @@ This course is still in draft while the cluster examples are rewritten against t
       claimedByUserId: studentByEmail("liam@example.com").id,
       claimedAt: daysAgo(25),
     })
-    .where(eq(schema.teamSeats.id, seededCoupons[1].id))
+    .where(eq(schema.teamSeats.id, seededSeats[1].id))
     .run();
 
   console.log(
-    `Created 1 team with Bossy McBossface as admin, 1 team purchase, and ${seededCoupons.length} team seats (${countRows(schema.teamSeats, isNotNull(schema.teamSeats.claimedByUserId))} claimed, ${countRows(schema.teamSeats, isNull(schema.teamSeats.claimedByUserId))} available).`
+    `Created 1 team with Bossy McBossface as admin, 1 team purchase, and ${seededSeats.length} team seats (${countRows(schema.teamSeats, isNotNull(schema.teamSeats.claimedByUserId))} claimed, ${countRows(schema.teamSeats, isNull(schema.teamSeats.claimedByUserId))} available).`
   );
 
   // ─── Generated history ───
@@ -2610,8 +2610,8 @@ This course is still in draft while the cluster examples are rewritten against t
 
   // ─── Further team purchases ───
   // Two more seat purchases so team revenue is not a single row, in mixed
-  // redemption states: one team most of the way through its seats, one that has
-  // bought and redeemed nothing yet.
+  // claim states: one team most of the way through its seats, one that has
+  // bought and claimed nothing yet.
 
   function createTeamPurchase(
     adminEmail: string,
@@ -2619,7 +2619,7 @@ This course is still in draft while the cluster examples are rewritten against t
     seats: number,
     codePrefix: string,
     purchasedDaysAgo: number,
-    redeemerEmails: string[]
+    claimerEmails: string[]
   ) {
     const teamAdmin = studentByEmail(adminEmail);
 
@@ -2650,7 +2650,7 @@ This course is still in draft while the cluster examples are rewritten against t
       .returning()
       .all();
 
-    const teamCoupons = db
+    const createdSeats = db
       .insert(schema.teamSeats)
       .values(
         Array.from({ length: seats }, (_, i) => ({
@@ -2664,41 +2664,41 @@ This course is still in draft while the cluster examples are rewritten against t
       .returning()
       .all();
 
-    // Redeemers named by email, for the reason given at the first team above.
-    redeemerEmails.forEach((email, i) => {
-      const redeemer = studentByEmail(email);
-      const redeemedDaysAgo = Math.max(0, purchasedDaysAgo - (i + 1) * 2);
+    // Claimers named by email, for the reason given at the first team above.
+    claimerEmails.forEach((email, i) => {
+      const claimer = studentByEmail(email);
+      const claimedDaysAgo = Math.max(0, purchasedDaysAgo - (i + 1) * 2);
 
       db.update(schema.teamSeats)
         .set({
-          claimedByUserId: redeemer.id,
-          claimedAt: daysAgo(redeemedDaysAgo),
+          claimedByUserId: claimer.id,
+          claimedAt: daysAgo(claimedDaysAgo),
         })
-        .where(eq(schema.teamSeats.id, teamCoupons[i].id))
+        .where(eq(schema.teamSeats.id, createdSeats[i].id))
         .run();
 
       db.insert(schema.teamMembers)
         .values({
           teamId: team.id,
-          userId: redeemer.id,
+          userId: claimer.id,
           role: TeamMemberRole.Member,
-          createdAt: daysAgo(redeemedDaysAgo),
+          createdAt: daysAgo(claimedDaysAgo),
         })
         .run();
 
       db.insert(schema.enrollments)
         .values({
-          userId: redeemer.id,
+          userId: claimer.id,
           courseId: course.id,
-          enrolledAt: daysAgo(redeemedDaysAgo),
+          enrolledAt: daysAgo(claimedDaysAgo),
         })
         .run();
     });
 
-    return { team, purchase, coupons: teamCoupons };
+    return { team, purchase, seats: createdSeats };
   }
 
-  // Eight seats on TypeScript, six redeemed.
+  // Eight seats on TypeScript, six claimed.
   createTeamPurchase(
     "ava.nakamura@student.dev",
     course1,
@@ -2715,7 +2715,7 @@ This course is still in draft while the cluster examples are rewritten against t
     ]
   );
 
-  // Four seats on Design Systems, bought during launch week, none redeemed yet.
+  // Four seats on Design Systems, bought during launch week, none claimed yet.
   createTeamPurchase(
     "marta.novak@student.dev",
     course3,
