@@ -3,6 +3,7 @@ import { Link, useFetcher, useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { Route } from "./+types/courses.$slug.lessons.$lessonId";
 import { getCurrentUserId } from "~/lib/session";
+import { notifyDiscussionReply } from "~/lib/prototype-knock.server";
 import { getAccess, requireContentAccess } from "~/lib/access.server";
 import { renderComment } from "~/lib/comment-markdown.server";
 import {
@@ -900,11 +901,15 @@ export async function action({ params, request }: Route.ActionArgs) {
         if (!parsed.success) {
           return { ok: false, error: "Enter a comment before posting." };
         }
-        createComment(
+        const created = createComment(
           currentUserId,
           lessonId,
           parsed.data.parentId ?? null,
           parsed.data.body
+        );
+        // PROTOTYPE (Knock spike): fire the Discussion Reply Notification.
+        await notifyDiscussionReply(created.id).catch((e) =>
+          console.error("[knock spike] trigger failed", e)
         );
         return { ok: true };
       }
