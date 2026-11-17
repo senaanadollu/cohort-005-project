@@ -38,6 +38,12 @@ if (!feedChannel) {
 }
 console.log(`In-app feed channel key: ${feedChannel.key}`);
 
+// Categories live in a project-wide catalog and must exist before a workflow
+// can reference them.
+for (const name of ["discussions", "new-enrollment"]) {
+  await mapi("PUT", `/preference_categories/${name}`, {});
+}
+
 async function upsertWorkflow(
   key: string,
   name: string,
