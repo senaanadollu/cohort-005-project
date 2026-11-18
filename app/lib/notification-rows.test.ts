@@ -71,7 +71,7 @@ describe("describeNotification", () => {
     const row = describeNotification(
       item("refund-request-approved", {
         course_title: "Introduction to TypeScript",
-        note: "Sorry it wasn't for you.",
+        decision_note: "Sorry it wasn't for you.",
         target_path: "/settings?refundRequest=3",
       })
     );
@@ -172,6 +172,20 @@ describe("describeNotification", () => {
     );
     expect(row?.snippet).toBeNull();
     expect(row?.targetPath).toBe("/instructor/2/students?student=5");
+  });
+
+  it("names the Student from the trigger's data when Knock has no actor name", () => {
+    const row = describeNotification(
+      item(
+        "new-enrollment",
+        { student_name: "Cy", course_title: "Introduction to TypeScript" },
+        null
+      )
+    );
+
+    expect(headline(row)).toBe(
+      "**Cy** enrolled in **Introduction to TypeScript**"
+    );
   });
 
   it("still reads sensibly when the actor and the trigger's fields are missing", () => {

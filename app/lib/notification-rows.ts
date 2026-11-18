@@ -102,7 +102,7 @@ const wordings: Record<string, Wording> = {
       course(data),
       plain(" was approved"),
     ],
-    snippetKey: "note",
+    snippetKey: "decision_note",
   },
   "refund-request-declined": {
     category: "Refunds",
@@ -111,7 +111,7 @@ const wordings: Record<string, Wording> = {
       course(data),
       plain(" was declined"),
     ],
-    snippetKey: "note",
+    snippetKey: "decision_note",
   },
   "refund-request-opened": {
     category: "Refunds",
@@ -143,7 +143,11 @@ const wordings: Record<string, Wording> = {
 export function describeNotification(item: FeedItem): NotificationRow | null {
   const wording = wordings[item.workflowKey];
   if (!wording) return null;
-  const actor = strong(item.actorName?.trim() || "Someone");
+  // Knock's actor first; Claimed Seat and New Enrollment also carry the
+  // Student's name in their data.
+  const actor = strong(
+    item.actorName?.trim() || text(item.data, "student_name") || "Someone"
+  );
   const path = text(item.data, "target_path");
   return {
     category: wording.category,
