@@ -92,6 +92,31 @@ describe("claimSeat", () => {
     expect(enrollmentsOf(base.user.id)).toHaveLength(1);
   });
 
+  it("records a Claimed Seat and a New Enrollment Notification in its transaction", () => {
+    const result = claimSeat(db, "SEAT-1", base.user.id, "US", NOW);
+    if (!result.ok) throw new Error(result.error);
+
+    const keys = db
+      .select()
+      .from(schema.pendingNotifications)
+      .all()
+      .map((row) => row.idempotencyKey)
+      .sort();
+    expect(keys).toEqual(
+      [
+        `seat-claimed:${seat()?.id}`,
+        `new-enrollment:${result.enrollment.id}`,
+      ].sort()
+    );
+  });
+
+  it("records no Notification when the claim is refused", () => {
+    claimSeat(db, "NOPE", base.user.id, "US", NOW);
+    claimSeat(db, "SEAT-1", base.user.id, "DE", NOW);
+
+    expect(db.select().from(schema.pendingNotifications).all()).toEqual([]);
+  });
+
   it("refuses an unknown code", () => {
     expect(claimSeat(db, "NOPE", base.user.id, "US", NOW)).toEqual({
       ok: false,

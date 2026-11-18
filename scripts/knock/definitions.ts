@@ -37,4 +37,72 @@ export const WORKFLOWS: WorkflowDefinition[] = [
         "**{{ data.lesson_title }}**: {{ data.snippet }}",
     },
   },
+  {
+    key: NotificationType.RefundRequestOpened,
+    name: "Refund Request opened",
+    category: "refunds",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** asked for a refund of **{{ data.course_title }}**: " +
+        "{{ data.reason }}",
+    },
+  },
+  {
+    key: NotificationType.RefundRequestApproved,
+    name: "Refund Request approved",
+    category: "refunds",
+    feed: {
+      markdownBody:
+        "Your refund request for **{{ data.course_title }}** was approved. " +
+        "{{ data.decision_note }}",
+    },
+  },
+  {
+    key: NotificationType.RefundRequestDeclined,
+    name: "Refund Request declined",
+    category: "refunds",
+    feed: {
+      markdownBody:
+        "Your refund request for **{{ data.course_title }}** was declined. " +
+        "{{ data.decision_note }}",
+    },
+  },
+  {
+    key: NotificationType.SeatClaimed,
+    name: "Claimed Seat",
+    category: "team",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** claimed a Seat on **{{ data.course_title }}**. " +
+        "{{ data.seats_left }} left.",
+    },
+  },
+  {
+    key: NotificationType.NewEnrollment,
+    name: "New Enrollment",
+    category: "enrollments",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** enrolled in **{{ data.course_title }}**.",
+    },
+  },
+  {
+    key: NotificationType.DiscussionQuestion,
+    name: "Discussion Question",
+    category: "discussions",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** asked a question in " +
+        "**{{ data.lesson_title }}**: {{ data.snippet }}",
+    },
+  },
 ];
+
+// The environment default preference set: one `false`, Enrollments off on the
+// in-app feed channel until a person opts in. Everything unset defaults to on.
+// It replaces the whole set, including what the prototypes left behind.
+export const DEFAULT_PREFERENCE_SET = {
+  categories: {
+    enrollments: { channel_types: { in_app_feed: false } },
+  },
+};

@@ -1,4 +1,8 @@
-import { PREFERENCE_CATEGORIES, type WorkflowDefinition } from "./definitions";
+import {
+  DEFAULT_PREFERENCE_SET,
+  PREFERENCE_CATEGORIES,
+  type WorkflowDefinition,
+} from "./definitions";
 
 // ─── Push the repo's Knock definitions ───
 // Makes Knock match scripts/knock/definitions.ts: creates the preference
@@ -91,6 +95,14 @@ export async function pushToKnock(
     );
     log(`workflow ${workflow.key}: committed and active`);
   }
+
+  // Replaces the whole set, so the prototype's leftover (which names a category
+  // archived below) goes before the archiving. Applies at once; it is not
+  // committed or promoted.
+  await api("PUT", `/environments/${ENVIRONMENT}/defaults`, {
+    preference_set: DEFAULT_PREFERENCE_SET,
+  });
+  log("environment default preference set: ok");
 
   // Workflows go first: a leftover workflow may still use a leftover category.
   const definedWorkflows = new Set<string>(options.workflows.map((w) => w.key));

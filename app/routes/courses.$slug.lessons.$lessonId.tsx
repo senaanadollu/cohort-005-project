@@ -10,7 +10,8 @@ import {
   type RenderedComment,
 } from "~/components/comment-thread";
 import { validateCommentBody } from "~/lib/comments";
-import { createComment } from "~/lib/comments.server";
+import { createComment, deleteComment } from "~/lib/comments.server";
+import { messagesFromEnv } from "~/lib/knock.server";
 import { db } from "~/db";
 import {
   categories,
@@ -414,26 +415,6 @@ function updateComment(commentId: number, userId: number, body: string) {
   return db
     .update(comments)
     .set({ body: trimmed, editedAt: new Date().toISOString() })
-    .where(eq(comments.id, commentId))
-    .returning()
-    .get();
-}
-
-function deleteComment(commentId: number, userId: number, isStaff: boolean) {
-  const existing = getCommentById(commentId);
-  if (!existing) {
-    throw new Error("Comment not found");
-  }
-  if (existing.userId !== userId && !isStaff) {
-    throw new Error("You can only delete your own comments");
-  }
-  if (existing.deletedAt !== null) {
-    return existing;
-  }
-
-  return db
-    .update(comments)
-    .set({ deletedAt: new Date().toISOString() })
     .where(eq(comments.id, commentId))
     .returning()
     .get();
@@ -897,7 +878,13 @@ export async function action({ params, request }: Route.ActionArgs) {
       if (!existing || existing.lessonId !== lessonId) {
         throw data("Comment not found", { status: 404 });
       }
-      deleteComment(parsed.data.commentId, currentUserId, access.isStaff);
+      deleteComment(
+        db,
+        parsed.data.commentId,
+        currentUserId,
+        access.isStaff,
+        messagesFromEnv(process.env)
+      );
       return { ok: true };
     } catch (error) {
       // Service validation failures are user-correctable; anything thrown as a
