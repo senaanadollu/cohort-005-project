@@ -361,12 +361,24 @@ export function raiseRefundRequest(
   reason: string,
   now: Date
 ): RaiseResult {
-  const check = checkRefundRequest(db, purchaseId, buyerId, now);
+  return db.transaction((tx) =>
+    raiseInTransaction(tx, purchaseId, buyerId, reason, now)
+  );
+}
+
+function raiseInTransaction(
+  tx: Tx,
+  purchaseId: number,
+  buyerId: number,
+  reason: string,
+  now: Date
+): RaiseResult {
+  const check = checkRefundRequest(tx, purchaseId, buyerId, now);
   if (!check.ok) return check;
 
   const { purchase } = check;
-  const buyer = db.select().from(users).where(eq(users.id, buyerId)).get();
-  const course = db
+  const buyer = tx.select().from(users).where(eq(users.id, buyerId)).get();
+  const course = tx
     .select()
     .from(courses)
     .where(eq(courses.id, purchase.courseId))
@@ -376,7 +388,7 @@ export function raiseRefundRequest(
     return { ok: false, status: 404, error: "Purchase not found." };
   }
 
-  const refundRequest = db
+  const refundRequest = tx
     .insert(refunds)
     .values({
       purchaseId: purchase.id,
@@ -390,7 +402,7 @@ export function raiseRefundRequest(
   return {
     ok: true,
     refundRequestId: refundRequest.id,
-    kind: kindOf(getSeats(db, purchase.id)),
+    kind: kindOf(getSeats(tx, purchase.id)),
     email: {
       to: buyer.email,
       subject: `Refund requested — ${course.title}`,
