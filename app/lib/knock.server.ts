@@ -107,3 +107,132 @@ export function senderFromEnv(
   }
   return loggingSender(log);
 }
+
+// ─── Removing a Notification from the feed ───
+// Knock has no endpoint that deletes a message. The documented way to make one
+// leave a Notification Feed is to archive it. The trigger returns no message
+// ids, so Cadence finds them by listing messages filtered by the trigger's
+// data. KnockMessages is the injected seam for that, like KnockSender.
+
+export type KnockMessage = { id: string; data: Record<string, unknown> };
+
+export interface KnockMessages {
+  // One page of messages sent by the workflow whose trigger data matches.
+  list(
+    workflowKey: string,
+    triggerData: Record<string, unknown>,
+    after?: string
+  ): Promise<{ items: KnockMessage[]; next?: string }>;
+  // Archives messages, which hides them from the default feed.
+  archive(messageIds: string[]): Promise<void>;
+}
+
+// Archives every message the workflow sent for this comment and returns how
+// many. Each message's own data is checked as well as Knock's filter: whether
+// the filter matches a subset of the data is not documented, and a loose match
+// must never archive someone else's Notification.
+export async function removeNotificationsFor(
+  messages: KnockMessages,
+  workflowKey: string,
+  commentId: number
+): Promise<number> {
+  let archived = 0;
+  let after: string | undefined;
+  do {
+    const page = await messages.list(
+      workflowKey,
+      { comment_id: commentId },
+      after
+    );
+    const ids = page.items
+      .filter((message) => message.data.comment_id === commentId)
+      .map((message) => message.id);
+    if (ids.length > 0) {
+      await messages.archive(ids);
+      archived += ids.length;
+    }
+    after = page.next;
+  } while (after);
+  return archived;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+// The real client. Thin on purpose: no test constructs it. feedChannelId, when
+// set, limits the listing to feed messages.
+export function knockMessages(
+  apiKey: string,
+  feedChannelId?: string
+): KnockMessages {
+  const headers = {
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+  };
+  return {
+    async list(workflowKey, triggerData, after) {
+      const query = new URLSearchParams({
+        source: workflowKey,
+        trigger_data: JSON.stringify(triggerData),
+        page_size: "50",
+      });
+      if (feedChannelId) query.set("channel_id", feedChannelId);
+      if (after) query.set("after", after);
+      const response = await fetch(`${KNOCK_API}/messages?${query}`, {
+        headers,
+      });
+      if (!response.ok) {
+        throw new Error(`Knock list messages answered ${response.status}`);
+      }
+      const body = asRecord(await response.json());
+      const entries = Array.isArray(body.entries) ? body.entries : [];
+      const next = asRecord(body.page_info).after;
+      return {
+        items: entries.map((entry) => {
+          const message = asRecord(entry);
+          return { id: String(message.id), data: asRecord(message.data) };
+        }),
+        next: typeof next === "string" && next ? next : undefined,
+      };
+    },
+    async archive(messageIds) {
+      const response = await fetch(`${KNOCK_API}/messages/batch/archived`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ message_ids: messageIds }),
+      });
+      if (!response.ok) {
+        throw new Error(`Knock archive messages answered ${response.status}`);
+      }
+    },
+  };
+}
+
+// Stands in for Knock outside production when there is no KNOCK_API_KEY: finds
+// nothing, and says so.
+export function loggingMessages(
+  log: (line: string) => void = console.log
+): KnockMessages {
+  return {
+    async list(workflowKey, triggerData) {
+      log(
+        `[notifications] no KNOCK_API_KEY, would archive ${workflowKey} ` +
+          `messages for ${JSON.stringify(triggerData)}`
+      );
+      return { items: [] };
+    },
+    async archive() {},
+  };
+}
+
+export function messagesFromEnv(
+  env: Record<string, string | undefined>,
+  log?: (line: string) => void
+): KnockMessages {
+  const apiKey = env.KNOCK_API_KEY;
+  if (apiKey) return knockMessages(apiKey, env.KNOCK_FEED_CHANNEL_ID);
+  return loggingMessages(log);
+}

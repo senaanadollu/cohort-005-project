@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { senderFromEnv } from "./knock.server";
+import {
+  removeNotificationsFor,
+  senderFromEnv,
+  type KnockMessages,
+} from "./knock.server";
 
 const trigger = {
   actor: { id: "2", name: "Ada", email: "ada@example.com" },
@@ -31,5 +35,82 @@ describe("senderFromEnv", () => {
     expect(lines[0]).toContain("discussion-reply");
     expect(lines[0]).toContain('"recipients":[{"id":"1"');
     expect(lines[0]).toContain('"comment_id":7');
+  });
+});
+
+describe("removeNotificationsFor", () => {
+  type Item = { id: string; data: Record<string, unknown> };
+
+  function fakeMessages(pages: Item[][]) {
+    const listed: {
+      workflowKey: string;
+      triggerData: unknown;
+      after?: string;
+    }[] = [];
+    const archived: string[][] = [];
+    const messages: KnockMessages = {
+      async list(workflowKey, triggerData, after) {
+        listed.push({ workflowKey, triggerData, after });
+        const index = after ? Number(after) : 0;
+        const next = index + 1 < pages.length ? String(index + 1) : undefined;
+        return { items: pages[index] ?? [], next };
+      },
+      async archive(ids) {
+        archived.push(ids);
+      },
+    };
+    return { messages, listed, archived };
+  }
+
+  it("archives the messages Knock lists for the comment", async () => {
+    const { messages, listed, archived } = fakeMessages([
+      [{ id: "m1", data: { comment_id: 7 } }],
+    ]);
+
+    const count = await removeNotificationsFor(messages, "discussion-reply", 7);
+
+    expect(listed).toEqual([
+      {
+        workflowKey: "discussion-reply",
+        triggerData: { comment_id: 7 },
+        after: undefined,
+      },
+    ]);
+    expect(archived).toEqual([["m1"]]);
+    expect(count).toBe(1);
+  });
+
+  it("archives only messages whose data names the comment, in case Knock matched loosely", async () => {
+    const { messages, archived } = fakeMessages([
+      [
+        { id: "m1", data: { comment_id: 7 } },
+        { id: "m2", data: { comment_id: 8 } },
+        { id: "m3", data: {} },
+      ],
+    ]);
+
+    await removeNotificationsFor(messages, "discussion-question", 7);
+
+    expect(archived).toEqual([["m1"]]);
+  });
+
+  it("follows the pages", async () => {
+    const { messages, archived } = fakeMessages([
+      [{ id: "m1", data: { comment_id: 7 } }],
+      [{ id: "m2", data: { comment_id: 7 } }],
+    ]);
+
+    await removeNotificationsFor(messages, "discussion-reply", 7);
+
+    expect(archived.flat()).toEqual(["m1", "m2"]);
+  });
+
+  it("archives nothing when Knock lists nothing", async () => {
+    const { messages, archived } = fakeMessages([[]]);
+
+    expect(await removeNotificationsFor(messages, "discussion-reply", 7)).toBe(
+      0
+    );
+    expect(archived).toEqual([]);
   });
 });

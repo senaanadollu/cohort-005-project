@@ -51,6 +51,7 @@ export enum NotificationType {
   RefundRequestDeclined = "refund-request-declined",
   SeatClaimed = "seat-claimed",
   NewEnrollment = "new-enrollment",
+  DiscussionQuestion = "discussion-question",
 }
 
 // ─── Tables ───

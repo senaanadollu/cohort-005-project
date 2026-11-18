@@ -86,6 +86,16 @@ export const WORKFLOWS: WorkflowDefinition[] = [
         "**{{ actor.name }}** enrolled in **{{ data.course_title }}**.",
     },
   },
+  {
+    key: NotificationType.DiscussionQuestion,
+    name: "Discussion Question",
+    category: "discussions",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** asked a question in " +
+        "**{{ data.lesson_title }}**: {{ data.snippet }}",
+    },
+  },
 ];
 
 // The environment default preference set: one `false`, Enrollments off on the
