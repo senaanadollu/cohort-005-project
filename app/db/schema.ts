@@ -383,6 +383,20 @@ export const pendingNotifications = sqliteTable("pending_notifications", {
   // Null while pending. Set once the row is done: sent to Knock, or closed
   // without a trigger because the subject is gone or nobody qualifies.
   sentAt: text("sent_at"),
+  // How many times the dispatcher has sent this row to Knock.
+  attempts: integer("attempts").notNull().default(0),
+  // When the first attempt was made. Knock remembers an idempotency key for 24
+  // hours from then, so no attempt is made more than 20 hours later.
+  firstAttemptAt: text("first_attempt_at"),
+  // Null means due now. Set after a failure that will be retried.
+  nextAttemptAt: text("next_attempt_at"),
+  // The trigger body (actor, recipients, data) as JSON, saved before the first
+  // attempt and resent unchanged on every retry, because Knock rejects a
+  // reused idempotency key whose body differs.
+  trigger: text("trigger"),
+  // Set when the dispatcher gives up: a non-429 4xx, or no success inside the
+  // retry budget. A failed row is kept and never sent again.
+  failedAt: text("failed_at"),
 });
 
 export const videoWatchEvents = sqliteTable("video_watch_events", {

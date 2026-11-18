@@ -11,8 +11,8 @@ import { senderFromEnv } from "~/lib/knock.server";
 import { startNotificationDispatcher } from "~/lib/notification-dispatcher.server";
 
 // ─── Server startup ───
-// The only place the Notification dispatcher is started, so importing a
-// service never starts it. senderFromEnv throws in production when the Knock
+// The only place the Notification dispatcher and its 30-second retry sweep are
+// started, so importing a service never starts them. senderFromEnv throws in production when the Knock
 // key is missing, which stops the server from starting. In development this
 // module is re-evaluated on edits, so the previous dispatcher is stopped first.
 const startup = globalThis as typeof globalThis & {
