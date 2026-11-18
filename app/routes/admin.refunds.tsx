@@ -22,6 +22,9 @@ import {
 } from "~/lib/refunds.server";
 import { RULE_BREAK_LABELS } from "~/lib/refund-rules";
 import { sendEmail } from "~/lib/mailer.server";
+import { parseHighlightId } from "~/lib/highlight";
+import { findRefundRequestStatus } from "~/lib/refund-request-tab.server";
+import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
 
 const refundFilterSchema = z
   .nativeEnum(RefundStatus)
@@ -83,7 +86,14 @@ export function meta() {
 export async function loader({ request, url }: Route.LoaderArgs) {
   await requirePlatformAdmin(request);
 
-  const status = refundFilterSchema.parse(url.searchParams.get("status"));
+  // A link to one Refund Request opens the tab that holds it now, whatever
+  // status it had when the link was sent. If it is gone, fall back to the tab
+  // asked for.
+  const linkedId = parseHighlightId(url.searchParams, "refundRequest");
+  const linkedStatus =
+    linkedId === null ? null : findRefundRequestStatus(db, linkedId);
+  const status =
+    linkedStatus ?? refundFilterSchema.parse(url.searchParams.get("status"));
 
   return {
     status,
@@ -147,6 +157,8 @@ const FILTERS: { status: RefundStatus; label: string }[] = [
 export default function AdminRefunds({ loaderData }: Route.ComponentProps) {
   const { status, refundRequests } = loaderData;
   const [, setSearchParams] = useSearchParams();
+  const highlightedId = useHighlightedId("refundRequest");
+  useScrollToHighlight(highlightedId);
 
   return (
     <div className="mx-auto max-w-7xl p-6 lg:p-8">
@@ -199,6 +211,7 @@ export default function AdminRefunds({ loaderData }: Route.ComponentProps) {
             <RefundRequestCard
               key={refundRequest.id}
               refundRequest={refundRequest}
+              highlighted={refundRequest.id === highlightedId}
             />
           ))}
         </div>
@@ -261,8 +274,10 @@ function Figures({
 
 function RefundRequestCard({
   refundRequest,
+  highlighted,
 }: {
   refundRequest: RefundRequestForReview;
+  highlighted: boolean;
 }) {
   const fetcher = useFetcher<
     { success: true; message: string } | { error: string }
@@ -288,7 +303,7 @@ function RefundRequestCard({
   }
 
   return (
-    <Card>
+    <Card data-highlighted={highlighted || undefined}>
       <CardContent className="space-y-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

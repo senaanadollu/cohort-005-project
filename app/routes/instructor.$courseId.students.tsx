@@ -21,6 +21,7 @@ import {
   LessonProgressStatus,
 } from "~/db/schema";
 import { eq, and, or, sql, desc, inArray, max } from "drizzle-orm";
+import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
 
 function getUserById(id: number) {
   return db.select().from(users).where(eq(users.id, id)).get();
@@ -345,6 +346,8 @@ export default function InstructorStudentRoster({
   loaderData,
 }: Route.ComponentProps) {
   const { course, students, quizCount } = loaderData;
+  const highlightedStudentId = useHighlightedId("student");
+  useScrollToHighlight(highlightedStudentId);
 
   return (
     <div className="mx-auto max-w-7xl p-6 lg:p-8">
@@ -439,6 +442,9 @@ export default function InstructorStudentRoster({
                       <tr
                         key={student.userId}
                         className="border-b border-border last:border-0"
+                        data-highlighted={
+                          student.userId === highlightedStudentId || undefined
+                        }
                       >
                         <td className="px-4 py-3">
                           <div>

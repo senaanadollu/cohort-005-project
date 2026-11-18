@@ -144,3 +144,18 @@
   width: 50%;
   animation: loading-bar-shimmer 1.2s ease-in-out infinite;
 }
+
+/* The item a Notification link points at: a brief highlight that fades out. */
+@keyframes highlight-flash {
+  0%,
+  60% {
+    background-color: color-mix(in oklch, var(--primary) 18%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+[data-highlighted] {
+  animation: highlight-flash 3s ease-out;
+}
