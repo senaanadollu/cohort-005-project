@@ -190,6 +190,7 @@ describe("dispatching Refund Request Notifications", () => {
       course_id: base.course.id,
       course_title: "Test Course",
       amount: 7900,
+      amount_formatted: "$79.00",
       reason: "Not for me.",
       target_path: `/admin/refunds?refundRequest=${id}`,
     });
@@ -234,6 +235,7 @@ describe("dispatching Refund Request Notifications", () => {
       course_id: base.course.id,
       course_title: "Test Course",
       amount: 7900,
+      amount_formatted: "$79.00",
       decision_note: "Done.",
       target_path: `/settings?refundRequest=${id}`,
     });
@@ -251,6 +253,7 @@ describe("dispatching Refund Request Notifications", () => {
     expect(recipientIds(sent[0].trigger)).toEqual([String(base.user.id)]);
     expect(sent[0].trigger.data).toMatchObject({
       amount: 15800,
+      amount_formatted: "$158.00",
       decision_note: "Outside policy.",
       target_path: `/settings?refundRequest=${id}`,
     });

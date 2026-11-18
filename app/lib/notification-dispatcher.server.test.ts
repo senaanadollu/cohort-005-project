@@ -473,7 +473,8 @@ describe("retrying a failed send", () => {
     expect(sent).toHaveLength(10);
     const row = rows().slice(-1)[0];
     expect(row.sentAt).toBeNull();
-    const failedAfter = new Date(row.failedAt ?? "").getTime() - START.getTime();
+    const failedAfter =
+      new Date(row.failedAt ?? "").getTime() - START.getTime();
     expect(failedAfter).toBeGreaterThan(11 * HOUR);
     expect(failedAfter).toBeLessThan(14 * HOUR);
     expect(errors.mock.calls.at(-1)?.join(" ")).toContain("giving up");
@@ -584,6 +585,55 @@ describe("the sweep", () => {
       await vi.waitFor(() => expect(sent).toHaveLength(1));
     } finally {
       stop();
+    }
+  });
+});
+
+describe("the site address the email button prefixes", () => {
+  it("adds app_url to every trigger's data, next to the target path", async () => {
+    const reply = replyPending();
+    const { sender, sent } = fakeSender();
+
+    await dispatchPendingNotifications(
+      db,
+      sender,
+      log,
+      "https://cadence.example.com"
+    );
+
+    expect(sent).toHaveLength(1);
+    expect(sent[0].trigger.data).toMatchObject({
+      app_url: "https://cadence.example.com",
+      comment_id: reply.id,
+      target_path: `/courses/${base.course.slug}/lessons/${lessonId}?comment=${reply.id}`,
+    });
+  });
+
+  it("resends the first attempt's app_url on a retry", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      at(0);
+      replyPending();
+      const { sender, sent } = scriptedSender(down, ok);
+
+      await dispatchPendingNotifications(
+        db,
+        sender,
+        log,
+        "https://first.example"
+      );
+      at(2 * HOUR);
+      await dispatchPendingNotifications(
+        db,
+        sender,
+        log,
+        "https://second.example"
+      );
+
+      expect(sent).toHaveLength(2);
+      expect(sent[1].trigger.data.app_url).toBe("https://first.example");
+    } finally {
+      vi.useRealTimers();
     }
   });
 });

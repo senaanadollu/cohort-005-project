@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  appUrlFromEnv,
   removeNotificationsFor,
   senderFromEnv,
   type KnockMessages,
@@ -35,6 +36,27 @@ describe("senderFromEnv", () => {
     expect(lines[0]).toContain("discussion-reply");
     expect(lines[0]).toContain('"recipients":[{"id":"1"');
     expect(lines[0]).toContain('"comment_id":7');
+  });
+});
+
+describe("appUrlFromEnv", () => {
+  it("refuses to run in production without APP_URL", () => {
+    expect(() => appUrlFromEnv({ NODE_ENV: "production" })).toThrow(/APP_URL/);
+  });
+
+  it("uses APP_URL without a trailing slash, so it prefixes a path cleanly", () => {
+    expect(
+      appUrlFromEnv({
+        NODE_ENV: "production",
+        APP_URL: "https://cadence.example.com/",
+      })
+    ).toBe("https://cadence.example.com");
+  });
+
+  it("falls back to the local dev server outside production", () => {
+    expect(appUrlFromEnv({ NODE_ENV: "development" })).toBe(
+      "http://localhost:5173"
+    );
   });
 });
 

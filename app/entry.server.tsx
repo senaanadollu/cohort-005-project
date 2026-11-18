@@ -7,22 +7,35 @@ import { isbot } from "isbot";
 import type { RenderToPipeableStreamOptions } from "react-dom/server";
 import { renderToPipeableStream } from "react-dom/server";
 import { db } from "~/db";
-import { senderFromEnv } from "~/lib/knock.server";
+import { appUrlFromEnv, senderFromEnv } from "~/lib/knock.server";
+import { checkEmailSandbox } from "~/lib/knock-sandbox.server";
 import { startNotificationDispatcher } from "~/lib/notification-dispatcher.server";
 
 // ─── Server startup ───
 // The only place the Notification dispatcher and its 30-second retry sweep are
-// started, so importing a service never starts them. senderFromEnv throws in production when the Knock
-// key is missing, which stops the server from starting. In development this
-// module is re-evaluated on edits, so the previous dispatcher is stopped first.
+// started, so importing a service never starts them. senderFromEnv and
+// appUrlFromEnv throw in production when the Knock key or APP_URL is missing,
+// which stops the server from starting. In development this module is
+// re-evaluated on edits, so the previous dispatcher is stopped first.
 const startup = globalThis as typeof globalThis & {
   __stopNotificationDispatcher?: () => void;
+  __emailSandboxChecked?: boolean;
 };
+const sender = senderFromEnv(process.env);
+const appUrl = appUrlFromEnv(process.env);
 startup.__stopNotificationDispatcher?.();
 startup.__stopNotificationDispatcher = startNotificationDispatcher(
   db,
-  senderFromEnv(process.env)
+  sender,
+  console.log,
+  appUrl
 );
+
+// Once per process, not on every re-evaluation. Never blocks or stops startup.
+if (!startup.__emailSandboxChecked) {
+  startup.__emailSandboxChecked = true;
+  void checkEmailSandbox(process.env);
+}
 
 export const streamTimeout = 5_000;
 
