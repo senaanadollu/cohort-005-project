@@ -46,6 +46,11 @@ export enum TeamMemberRole {
 // first half of every idempotency key.
 export enum NotificationType {
   DiscussionReply = "discussion-reply",
+  RefundRequestOpened = "refund-request-opened",
+  RefundRequestApproved = "refund-request-approved",
+  RefundRequestDeclined = "refund-request-declined",
+  SeatClaimed = "seat-claimed",
+  NewEnrollment = "new-enrollment",
 }
 
 // ─── Tables ───
