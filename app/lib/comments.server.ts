@@ -3,6 +3,11 @@ import { eq } from "drizzle-orm";
 import * as schema from "~/db/schema";
 import { comments, lessons } from "~/db/schema";
 import { validateCommentBody } from "~/lib/comments";
+import {
+  NotificationType,
+  kickDispatcher,
+  recordNotification,
+} from "~/lib/notifications.server";
 
 // ─── Comments ───
 // Creating a comment: a Discussion Question (top-level) or a Discussion Reply
@@ -31,7 +36,7 @@ export function createComment(
   if (!validated.ok) return validated;
   const { trimmed } = validated;
 
-  return db.transaction((tx): CreateCommentResult => {
+  const result = db.transaction((tx): CreateCommentResult => {
     const lesson = tx
       .select({ id: lessons.id })
       .from(lessons)
@@ -67,6 +72,14 @@ export function createComment(
       .returning()
       .get();
 
+    if (comment.parentId !== null) {
+      recordNotification(tx, NotificationType.DiscussionReply, comment.id);
+    }
+
     return { ok: true, comment };
   });
+
+  // The transaction has committed: send without the poster waiting.
+  if (result.ok) kickDispatcher();
+  return result;
 }

@@ -42,6 +42,12 @@ export enum TeamMemberRole {
   Member = "member",
 }
 
+// One member per Notification. The value is the Knock workflow key, and the
+// first half of every idempotency key.
+export enum NotificationType {
+  DiscussionReply = "discussion-reply",
+}
+
 // ─── Tables ───
 
 export const users = sqliteTable("users", {
@@ -359,6 +365,25 @@ export const comments = sqliteTable(
     index("comments_parent_idx").on(table.parentId),
   ]
 );
+
+// A Notification Cadence owes someone, recorded in the same transaction as the
+// event that caused it and sent to Knock afterwards by the dispatcher (ADR
+// 0013). Holds no recipients or wording: those are read when it is sent.
+export const pendingNotifications = sqliteTable("pending_notifications", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  type: text("type").notNull().$type<NotificationType>(),
+  // The id of the thing that happened, e.g. the comment for a Discussion Reply.
+  subjectId: integer("subject_id").notNull(),
+  // `<type>:<subject id>`. Unique, so one event can't be recorded twice, and
+  // sent as Knock's Idempotency-Key, so a retry can't notify twice.
+  idempotencyKey: text("idempotency_key").notNull().unique(),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  // Null while pending. Set once the row is done: sent to Knock, or closed
+  // without a trigger because the subject is gone or nobody qualifies.
+  sentAt: text("sent_at"),
+});
 
 export const videoWatchEvents = sqliteTable("video_watch_events", {
   id: integer("id").primaryKey({ autoIncrement: true }),

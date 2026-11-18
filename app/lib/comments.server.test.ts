@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { createTestDb, seedBaseData } from "~/test/setup";
 import * as schema from "~/db/schema";
 import { createComment } from "./comments.server";
+import { setDispatcherKick } from "./notifications.server";
 
 type TestDb = ReturnType<typeof createTestDb>;
 
@@ -148,5 +149,106 @@ describe("createComment", () => {
     });
     // The refused reply left no row behind: just the question and its reply.
     expect(db.select().from(schema.comments).all()).toHaveLength(2);
+  });
+});
+
+describe("createComment records Notifications", () => {
+  function pendingNotifications() {
+    return db.select().from(schema.pendingNotifications).all();
+  }
+
+  it("records a Discussion Reply Notification with the reply", () => {
+    const question = createComment(db, base.user.id, lessonId, null, "How?");
+    if (!question.ok) throw new Error("setup failed");
+
+    const reply = createComment(
+      db,
+      base.instructor.id,
+      lessonId,
+      question.comment.id,
+      "Like this."
+    );
+    if (!reply.ok) throw new Error("setup failed");
+
+    expect(pendingNotifications()).toEqual([
+      expect.objectContaining({
+        type: "discussion-reply",
+        subjectId: reply.comment.id,
+        idempotencyKey: `discussion-reply:${reply.comment.id}`,
+        sentAt: null,
+      }),
+    ]);
+  });
+
+  it("kicks the dispatcher once the reply and its Notification are committed", () => {
+    const question = createComment(db, base.user.id, lessonId, null, "How?");
+    if (!question.ok) throw new Error("setup failed");
+    const seenAtKick: number[] = [];
+    setDispatcherKick(() => seenAtKick.push(pendingNotifications().length));
+
+    try {
+      createComment(
+        db,
+        base.instructor.id,
+        lessonId,
+        question.comment.id,
+        "Hi"
+      );
+      createComment(db, base.instructor.id, lessonId, 9999, "Refused");
+    } finally {
+      setDispatcherKick(undefined);
+    }
+
+    expect(seenAtKick).toEqual([1]);
+  });
+
+  it("records no Discussion Reply Notification for a Discussion Question", () => {
+    createComment(db, base.user.id, lessonId, null, "How?");
+
+    expect(pendingNotifications()).toEqual([]);
+  });
+
+  it("records nothing when the reply is refused", () => {
+    const question = createComment(db, base.user.id, lessonId, null, "How?");
+    if (!question.ok) throw new Error("setup failed");
+    const reply = createComment(
+      db,
+      base.instructor.id,
+      lessonId,
+      question.comment.id,
+      "Like this."
+    );
+    if (!reply.ok) throw new Error("setup failed");
+
+    createComment(db, base.user.id, lessonId, reply.comment.id, "Thanks");
+    createComment(db, base.user.id, lessonId, question.comment.id, "   ");
+
+    expect(pendingNotifications().map((row) => row.subjectId)).toEqual([
+      reply.comment.id,
+    ]);
+  });
+
+  it("records nothing when writing the Notification fails, and the reply is rolled back with it", () => {
+    const question = createComment(db, base.user.id, lessonId, null, "How?");
+    if (!question.ok) throw new Error("setup failed");
+    // The next comment id is taken, so recording its Notification fails.
+    db.insert(schema.pendingNotifications)
+      .values({
+        type: schema.NotificationType.DiscussionReply,
+        subjectId: question.comment.id + 1,
+        idempotencyKey: `discussion-reply:${question.comment.id + 1}`,
+      })
+      .run();
+
+    expect(() =>
+      createComment(
+        db,
+        base.instructor.id,
+        lessonId,
+        question.comment.id,
+        "Like this."
+      )
+    ).toThrow();
+    expect(db.select().from(schema.comments).all()).toHaveLength(1);
   });
 });
