@@ -1,15 +1,20 @@
 import {
+  CATEGORY_NAMES,
   DEFAULT_PREFERENCE_SET,
+  EMAIL_LAYOUT,
+  EMAIL_LAYOUT_KEY,
+  EMAIL_PRE_CONTENT,
+  EMAIL_SENDER,
   PREFERENCE_CATEGORIES,
   type WorkflowDefinition,
 } from "./definitions";
 
 // ─── Push the repo's Knock definitions ───
 // Makes Knock match scripts/knock/definitions.ts: creates the preference
-// categories, upserts, commits and activates each workflow in the Development
-// environment, then archives the workflows and categories that are not defined
-// here (such as the prototypes' leftovers). Takes the Management API as a
-// parameter so tests never call Knock.
+// categories and the shared email layout, upserts, commits and activates each
+// workflow in the Development environment, then archives the workflows and
+// categories that are not defined here (such as the prototypes' leftovers).
+// Takes the Management API as a parameter so tests never call Knock.
 
 const ENVIRONMENT = "development";
 
@@ -38,7 +43,60 @@ async function listAll<T>(api: ManagementApi, path: string): Promise<T[]> {
   return entries;
 }
 
-function workflowBody(workflow: WorkflowDefinition, feedChannelKey: string) {
+// The Management API names a channel by its key; .env holds its id.
+async function channelKey(
+  api: ManagementApi,
+  channelId: string,
+  envName: string
+): Promise<string> {
+  const channels = await listAll<{ id: string; key: string }>(
+    api,
+    `/channels?id=${encodeURIComponent(channelId)}`
+  );
+  const channel = channels.find((entry) => entry.id === channelId);
+  if (!channel) {
+    throw new Error(
+      `No Knock channel has the id in ${envName} (${channelId}).`
+    );
+  }
+  return channel.key;
+}
+
+type ChannelKeys = { feed: string; email: string };
+
+// The email step on the Postmark channel. Its pre-content declares what the
+// shared layout reads: the greeting's first name, the button and the footer.
+function emailSteps(workflow: WorkflowDefinition, emailChannelKey: string) {
+  const { email } = workflow;
+  if (!email) return [];
+  return [
+    {
+      ref: "email",
+      type: "channel",
+      channel_type: "email",
+      channel_key: emailChannelKey,
+      channel_overrides: {
+        ...EMAIL_SENDER,
+        open_tracking: false,
+        link_tracking: false,
+      },
+      template: {
+        subject: email.subject,
+        html_body: email.htmlBody,
+        text_body: email.textBody,
+        settings: {
+          layout_key: EMAIL_LAYOUT_KEY,
+          pre_content:
+            EMAIL_PRE_CONTENT +
+            `{% assign button_label = "${email.button}" %}` +
+            `{% assign category_name = "${CATEGORY_NAMES[workflow.category]}" %}`,
+        },
+      },
+    },
+  ];
+}
+
+function workflowBody(workflow: WorkflowDefinition, channelKeys: ChannelKeys) {
   return {
     workflow: {
       name: workflow.name,
@@ -47,12 +105,13 @@ function workflowBody(workflow: WorkflowDefinition, feedChannelKey: string) {
         {
           ref: "in_app_feed",
           type: "channel",
-          channel_key: feedChannelKey,
+          channel_key: channelKeys.feed,
           template: {
             markdown_body: workflow.feed.markdownBody,
             action_url: "{{ data.target_path }}",
           },
         },
+        ...emailSteps(workflow, channelKeys.email),
       ],
     },
   };
@@ -60,33 +119,47 @@ function workflowBody(workflow: WorkflowDefinition, feedChannelKey: string) {
 
 export async function pushToKnock(
   api: ManagementApi,
-  options: { feedChannelId: string; workflows: WorkflowDefinition[] },
+  options: {
+    feedChannelId: string;
+    emailChannelId: string;
+    workflows: WorkflowDefinition[];
+  },
   log: (line: string) => void = console.log
 ): Promise<void> {
-  const channels = await listAll<{ id: string; key: string }>(
-    api,
-    `/channels?id=${encodeURIComponent(options.feedChannelId)}`
-  );
-  const feedChannel = channels.find(
-    (channel) => channel.id === options.feedChannelId
-  );
-  if (!feedChannel) {
-    throw new Error(
-      `No Knock channel has the id in KNOCK_FEED_CHANNEL_ID (${options.feedChannelId}).`
-    );
-  }
+  const channelKeys: ChannelKeys = {
+    feed: await channelKey(api, options.feedChannelId, "KNOCK_FEED_CHANNEL_ID"),
+    email: await channelKey(
+      api,
+      options.emailChannelId,
+      "KNOCK_EMAIL_CHANNEL_ID"
+    ),
+  };
+  const message = encodeURIComponent("Pushed from the Cadence repo");
 
   for (const category of PREFERENCE_CATEGORIES) {
     await api("PUT", `/preference_categories/${category}`);
     log(`preference category ${category}: ok`);
   }
 
+  // A layout must exist before an email step can name it.
+  await api(
+    "PUT",
+    `/email_layouts/${EMAIL_LAYOUT_KEY}?environment=${ENVIRONMENT}&commit=true&commit_message=${message}`,
+    {
+      email_layout: {
+        name: EMAIL_LAYOUT.name,
+        html_layout: EMAIL_LAYOUT.html,
+        text_layout: EMAIL_LAYOUT.text,
+      },
+    }
+  );
+  log(`email layout ${EMAIL_LAYOUT_KEY}: committed`);
+
   for (const workflow of options.workflows) {
-    const message = encodeURIComponent("Pushed from the Cadence repo");
     await api(
       "PUT",
       `/workflows/${workflow.key}?environment=${ENVIRONMENT}&commit=true&commit_message=${message}`,
-      workflowBody(workflow, feedChannel.key)
+      workflowBody(workflow, channelKeys)
     );
     await api(
       "PUT",

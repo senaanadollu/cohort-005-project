@@ -2,10 +2,12 @@ import { eq } from "drizzle-orm";
 import { courses, purchases, refunds, users, UserRole } from "~/db/schema";
 import type { NotificationEvent } from "~/lib/notification-definitions.server";
 import type { Queryable } from "~/lib/notifications.server";
+import { formatPrice } from "~/lib/utils";
 
 // ─── Refund Request Notifications ───
 // What the three Refund Request Notifications say, and to whom. Registered in
-// notification-definitions.server.ts. Subject: the Refund Request.
+// notification-definitions.server.ts. Subject: the Refund Request. `amount` is
+// integer cents (ADR 0005); `amount_formatted` is how the emails print it.
 
 function findRefundRequest(db: Queryable, refundRequestId: number) {
   const row = db
@@ -49,6 +51,7 @@ export function refundRequestOpened(
       course_id: found.purchase.courseId,
       course_title: found.courseTitle,
       amount: found.purchase.amountPaid,
+      amount_formatted: formatPrice(found.purchase.amountPaid),
       reason: found.refundRequest.reason,
       target_path: `/admin/refunds?refundRequest=${refundRequestId}`,
     },
@@ -78,6 +81,7 @@ function refundRequestDecided(
       course_id: found.purchase.courseId,
       course_title: found.courseTitle,
       amount: found.purchase.amountPaid,
+      amount_formatted: formatPrice(found.purchase.amountPaid),
       decision_note: found.refundRequest.decisionNote,
       target_path: `/settings?refundRequest=${refundRequestId}`,
     },

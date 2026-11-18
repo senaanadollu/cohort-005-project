@@ -207,7 +207,7 @@ gap() { printf '\n'; }
 
 run_wizard() {
 
-TOTAL_STAGES=9
+TOTAL_STAGES=10
 
 banner "Set up email for Cadence Notifications"
 
@@ -359,9 +359,10 @@ step "4. Open the 'Advanced' section, find 'From name' (under Overrides)"
 step "   and type: Cadence"
 step "5. Still in Advanced, check these and leave them as they are:"
 gap
-say "        Sandbox mode:   OFF   (if it is on, no email is ever sent)"
 say "        Open tracking:  OFF"
 say "        Link tracking:  OFF"
+gap
+note "Leave 'Sandbox mode' for now. It gets its own screen in a moment."
 gap
 step "6. Click 'Save changes'."
 gap
@@ -406,13 +407,37 @@ write_env KNOCK_EMAIL_CHANNEL_ID "$KNOCK_EMAIL_CHANNEL_ID"
 pause
 
 # ── 8 ─────────────────────────────────────────────────────────────────────
-stage "Check: three things to confirm"
+stage "Knock: switch sandbox mode on for Development"
+why "Why: Development is where Cadence runs on this computer, with seeded"
+why "users and maybe real addresses. In sandbox mode Knock still builds every"
+why "Notification email, so you can read it, but never hands it to Postmark."
+why "So nothing you do locally can email a real person."
+gap
+step "1. Stay on the Postmark channel's page in Knock."
+step "2. Under 'Environment configurations', open the ${BOLD}Development${RESET} row"
+step "   again ('Manage configuration')."
+step "3. Open the 'Advanced' section and switch ${BOLD}Sandbox mode${RESET} ON."
+step "4. Click 'Save changes'."
+gap
+warn "Only Development. Production must never be in sandbox mode, or its"
+warn "Notification emails would silently stop."
+gap
+note "This switch exists only in the dashboard: no script can flip it. Cadence"
+note "checks it when it starts on your computer and prints a loud warning if"
+note "it is off."
+gap
+see "the Development row saved, with Sandbox mode ON."
+pause "Press Enter once Sandbox mode is on for Development"
+
+# ── 9 ─────────────────────────────────────────────────────────────────────
+stage "Check: four things to confirm"
 say "Look back at your two browser tabs and check each of these is true."
 gap
 ok=1
 confirm "Postmark: your work email is listed as a verified Sender Signature?" || ok=0
 confirm "Knock: a channel named 'Postmark' exists?" || ok=0
-confirm "Knock: its Development settings are saved, with Sandbox mode OFF?" || ok=0
+confirm "Knock: its Development settings are saved?" || ok=0
+confirm "Knock: Development has Sandbox mode ON?" || ok=0
 gap
 if (( ok )); then
   printf '  %s✓ All set.%s\n' "$GREEN" "$RESET"
@@ -422,15 +447,15 @@ else
 fi
 pause
 
-# ── 9 ─────────────────────────────────────────────────────────────────────
+# ── 10 ────────────────────────────────────────────────────────────────────
 stage "Last step: tell Claude"
 say "Your part is done. Go back to Claude and type:"
 gap
 say "        ${BOLD}done${RESET}"
 gap
-say "Claude will then send one test Notification email to your work address."
-say "Keep that inbox open: the email should arrive within a minute."
-say "Tell Claude whether it arrived."
+say "From now on, Notification emails sent while working locally do not reach"
+say "any inbox. Read them in Knock's message log (the dashboard's Logs, in"
+say "Development), where each one appears rendered and marked 'Not sent'."
 pause "Press Enter to finish"
 
 finish

@@ -593,7 +593,10 @@ export function listTeamLicences(db: Queryable, buyerId: number, now: Date) {
 
 // ─── Deciding a Refund Request ───
 
-export type DecisionResult = { ok: true; email: Email } | Failure;
+// The buyer hears of the decision through its Notification, which the
+// dispatcher sends by email after the transaction commits, so deciding never
+// waits on or fails because of email.
+export type DecisionResult = { ok: true } | Failure;
 
 function findOpenRefundRequest(
   tx: Queryable,
@@ -707,10 +710,7 @@ export function approveRefundRequest(
       refundRequestId
     );
 
-    return {
-      ok: true,
-      email: buildDecisionEmail(tx, purchase, RefundStatus.Approved, note),
-    };
+    return { ok: true };
   });
   if (result.ok) kickDispatcher();
   return result;
@@ -757,64 +757,8 @@ export function declineRefundRequest(
       refundRequestId
     );
 
-    return {
-      ok: true,
-      email: buildDecisionEmail(
-        tx,
-        found.purchase,
-        RefundStatus.Declined,
-        trimmedNote
-      ),
-    };
+    return { ok: true };
   });
   if (result.ok) kickDispatcher();
   return result;
-}
-
-/** The email the buyer gets once their Refund Request is decided. */
-function buildDecisionEmail(
-  db: Queryable,
-  purchase: Purchase,
-  decision: RefundStatus.Approved | RefundStatus.Declined,
-  note: string | null
-): Email {
-  const buyer = db
-    .select()
-    .from(users)
-    .where(eq(users.id, purchase.userId))
-    .get();
-  const course = db
-    .select()
-    .from(courses)
-    .where(eq(courses.id, purchase.courseId))
-    .get();
-
-  const courseTitle = course?.title ?? "your course";
-  const noteLines = note ? ["", note] : [];
-
-  const middle =
-    decision === RefundStatus.Approved
-      ? [
-          `We have approved your refund request for "${courseTitle}".`,
-          `${formatPrice(purchase.amountPaid)}, the full amount you paid, is on its way back to you.`,
-          ...noteLines,
-        ]
-      : [
-          `We have looked at your refund request for "${courseTitle}" and decided not to refund it.`,
-          ...noteLines,
-          "",
-          "You still have everything you bought. If something changes, you can raise a new refund request.",
-        ];
-
-  return {
-    to: buyer?.email ?? "",
-    subject: `Refund ${decision} — ${courseTitle}`,
-    body: [
-      `Hi ${buyer?.name ?? "there"},`,
-      "",
-      ...middle,
-      "",
-      "— The Cadence team",
-    ].join("\n"),
-  };
 }

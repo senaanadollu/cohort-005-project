@@ -101,13 +101,20 @@ const savedTrigger: z.ZodType<WorkflowTrigger> = z.object({
   data: z.record(z.string(), z.unknown()),
 });
 
-function buildTrigger(event: NotificationEvent): WorkflowTrigger | undefined {
+// appUrl, when given, travels as `app_url`: the email templates prefix it to
+// `target_path` for the button, so the feed keeps a path and the email gets a
+// full address.
+function buildTrigger(
+  event: NotificationEvent,
+  appUrl: string | undefined
+): WorkflowTrigger | undefined {
   const recipients = recipientsWithoutActor(event);
   if (recipients.length === 0) return undefined;
   return {
     actor: knockUser(event.actor),
     recipients: recipients.map(knockUser),
-    data: event.data,
+    data:
+      appUrl === undefined ? event.data : { ...event.data, app_url: appUrl },
   };
 }
 
@@ -115,9 +122,15 @@ function buildTrigger(event: NotificationEvent): WorkflowTrigger | undefined {
 // last attempt closes the row. The body sent is the one saved before the
 // first attempt: Knock rejects a reused idempotency key whose body differs,
 // which would otherwise turn a renamed person into a failed row.
-async function dispatchRow(db: Db, sender: KnockSender, pending: Row, log: Log) {
+async function dispatchRow(
+  db: Db,
+  sender: KnockSender,
+  pending: Row,
+  log: Log,
+  appUrl: string | undefined
+) {
   const event = notificationBuilders[pending.type](db, pending.subjectId);
-  const current = event ? buildTrigger(event) : undefined;
+  const current = event ? buildTrigger(event, appUrl) : undefined;
   if (!current) {
     close(db, pending);
     return;
@@ -174,7 +187,8 @@ async function dispatchRow(db: Db, sender: KnockSender, pending: Row, log: Log) 
 export async function dispatchPendingNotifications(
   db: Db,
   sender: KnockSender,
-  log: Log = console.log
+  log: Log = console.log,
+  appUrl?: string
 ): Promise<void> {
   const now = new Date().toISOString();
   const rows = db
@@ -195,7 +209,7 @@ export async function dispatchPendingNotifications(
 
   for (const row of rows) {
     try {
-      await dispatchRow(db, sender, row, log);
+      await dispatchRow(db, sender, row, log, appUrl);
     } catch (error) {
       console.error(
         `[notifications] ${row.idempotencyKey} could not be sent`,
@@ -213,7 +227,8 @@ export async function dispatchPendingNotifications(
 export function startNotificationDispatcher(
   db: Db,
   sender: KnockSender,
-  log: Log = console.log
+  log: Log = console.log,
+  appUrl?: string
 ): () => void {
   let running = false;
   let again = false;
@@ -227,7 +242,7 @@ export function startNotificationDispatcher(
     try {
       do {
         again = false;
-        await dispatchPendingNotifications(db, sender, log);
+        await dispatchPendingNotifications(db, sender, log, appUrl);
       } while (again);
     } finally {
       running = false;

@@ -108,6 +108,25 @@ export function senderFromEnv(
   return loggingSender(log);
 }
 
+// ─── The site address in Notification emails ───
+// The dispatcher sends Knock a target path; the email button prefixes it with
+// APP_URL. Throws in production when it is missing, so the server refuses to
+// start rather than send buttons that lead nowhere. Outside production it
+// falls back to the local dev server.
+const DEV_APP_URL = "http://localhost:5173";
+
+export function appUrlFromEnv(env: Record<string, string | undefined>): string {
+  const appUrl = env.APP_URL?.trim();
+  if (appUrl) return appUrl.replace(/\/+$/, "");
+  if (env.NODE_ENV === "production") {
+    throw new Error(
+      "APP_URL is not set. Cadence will not start in production without it, " +
+        "because the buttons in Notification emails would have no address."
+    );
+  }
+  return DEV_APP_URL;
+}
+
 // ─── Removing a Notification from the feed ───
 // Knock has no endpoint that deletes a message. The documented way to make one
 // leave a Notification Feed is to archive it. The trigger returns no message
