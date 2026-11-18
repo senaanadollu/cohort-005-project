@@ -10,13 +10,21 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import { UserRole, RefundStatus, users } from "~/db/schema";
+import {
+  UserRole,
+  RefundStatus,
+  TeamMemberRole,
+  users,
+  teamMembers,
+} from "~/db/schema";
 import { AlertTriangle } from "lucide-react";
 import { data, isRouteErrorResponse, Link } from "react-router";
 import { db } from "~/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { formatPrice } from "~/lib/utils";
 import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
+import { NotificationPreferencesCard } from "~/components/notification-preferences-card";
+import { preferenceRowsFor } from "~/lib/notification-preferences";
 import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
 
 const settingsSchema = z.object({
@@ -51,6 +59,20 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const refundRequests = listRefundRequestsForBuyer(db, currentUserId);
+  const isTeamAdmin = !!db
+    .select({ id: teamMembers.id })
+    .from(teamMembers)
+    .where(
+      and(
+        eq(teamMembers.userId, currentUserId),
+        eq(teamMembers.role, TeamMemberRole.Admin)
+      )
+    )
+    .get();
+  const preferenceRows = preferenceRowsFor({
+    role: currentUser.role,
+    isTeamAdmin,
+  });
 
   return {
     user: {
@@ -61,6 +83,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       role: currentUser.role,
     },
     refundRequests,
+    preferenceRows,
   };
 }
 
@@ -99,7 +122,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { user, refundRequests } = loaderData;
+  const { user, refundRequests, preferenceRows } = loaderData;
   const openCount = refundRequests.filter(
     (refundRequest) => refundRequest.status === RefundStatus.Open
   ).length;
@@ -190,6 +213,8 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
           </fetcher.Form>
         </CardContent>
       </Card>
+
+      <NotificationPreferencesCard rows={preferenceRows} />
 
       {refundRequests.length > 0 && (
         <Card className="mt-8 max-w-md">
