@@ -1,6 +1,12 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull, lte, or } from "drizzle-orm";
+import { z } from "zod";
 import { pendingNotifications } from "~/db/schema";
-import { knockUser, type KnockSender } from "~/lib/knock.server";
+import {
+  knockUser,
+  type KnockResponse,
+  type KnockSender,
+  type WorkflowTrigger,
+} from "~/lib/knock.server";
 import {
   notificationBuilders,
   type NotificationEvent,
@@ -15,58 +21,175 @@ import { setDispatcherKick, type Db } from "~/lib/notifications.server";
 type Row = typeof pendingNotifications.$inferSelect;
 type Log = (line: string) => void;
 
+// ─── Retry policy ───
+// A network error, a 5xx or a 429 is retried with exponential backoff: the
+// wait after attempt n is RETRY_BASE_MS * 2^(n-1), so ten attempts span about
+// 12h45m. Knock caches a successful response for an idempotency key for 24
+// hours, so no attempt is ever made more than RETRY_WINDOW_MS after the first,
+// even when the server was down and the sweep is late. Any other 4xx fails the
+// row on the first attempt.
+export const MAX_ATTEMPTS = 10;
+export const RETRY_BASE_MS = 90_000;
+export const RETRY_WINDOW_MS = 20 * 60 * 60 * 1000;
+export const SWEEP_INTERVAL_MS = 30_000;
+
+function retryable(response: KnockResponse) {
+  return response.status === 429 || response.status >= 500;
+}
+
+function succeeded(response: KnockResponse) {
+  return response.status >= 200 && response.status < 300;
+}
+
 // The one place the person who caused a Notification is taken off its
 // recipients: nobody is notified of their own action.
 export function recipientsWithoutActor(event: NotificationEvent) {
   return event.recipients.filter((person) => person.id !== event.actor.id);
 }
 
-function close(db: Db, row: Row) {
+function update(db: Db, row: Row, values: Partial<Row>) {
   db.update(pendingNotifications)
-    .set({ sentAt: new Date().toISOString() })
+    .set(values)
     .where(
       and(
         eq(pendingNotifications.id, row.id),
-        isNull(pendingNotifications.sentAt)
+        isNull(pendingNotifications.sentAt),
+        isNull(pendingNotifications.failedAt)
       )
     )
     .run();
 }
 
-async function dispatchRow(db: Db, sender: KnockSender, row: Row, log: Log) {
-  const event = notificationBuilders[row.type](db, row.subjectId);
-  const recipients = event ? recipientsWithoutActor(event) : [];
-  if (!event || recipients.length === 0) {
-    close(db, row);
+// Done: sent to Knock, or closed without a trigger because the subject is gone
+// or nobody qualifies.
+function close(db: Db, row: Row) {
+  update(db, row, { sentAt: new Date().toISOString() });
+}
+
+function fail(db: Db, row: Row, reason: string) {
+  update(db, row, { failedAt: new Date().toISOString() });
+  console.error(
+    `[notifications] ${row.idempotencyKey} failed after ${row.attempts} ` +
+      `attempt(s), giving up: ${reason}`
+  );
+}
+
+// Called after attempt number row.attempts failed in a way worth retrying.
+function retryLater(db: Db, row: Row, reason: string) {
+  const firstAttemptAt = new Date(row.firstAttemptAt ?? Date.now()).getTime();
+  const next = Date.now() + RETRY_BASE_MS * 2 ** (row.attempts - 1);
+  if (row.attempts >= MAX_ATTEMPTS || next > firstAttemptAt + RETRY_WINDOW_MS) {
+    fail(db, row, reason);
     return;
   }
+  update(db, row, { nextAttemptAt: new Date(next).toISOString() });
+  console.error(
+    `[notifications] ${row.idempotencyKey} attempt ${row.attempts} failed, ` +
+      `retrying at ${new Date(next).toISOString()}: ${reason}`
+  );
+}
 
-  const trigger = {
+const savedUser = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  avatar: z.string().optional(),
+});
+const savedTrigger: z.ZodType<WorkflowTrigger> = z.object({
+  actor: savedUser,
+  recipients: z.array(savedUser),
+  data: z.record(z.string(), z.unknown()),
+});
+
+function buildTrigger(event: NotificationEvent): WorkflowTrigger | undefined {
+  const recipients = recipientsWithoutActor(event);
+  if (recipients.length === 0) return undefined;
+  return {
     actor: knockUser(event.actor),
     recipients: recipients.map(knockUser),
     data: event.data,
   };
-  const response = await sender.trigger(row.type, trigger, row.idempotencyKey);
+}
+
+// Reads the current data on every attempt, so a subject deleted since the
+// last attempt closes the row. The body sent is the one saved before the
+// first attempt: Knock rejects a reused idempotency key whose body differs,
+// which would otherwise turn a renamed person into a failed row.
+async function dispatchRow(db: Db, sender: KnockSender, pending: Row, log: Log) {
+  const event = notificationBuilders[pending.type](db, pending.subjectId);
+  const current = event ? buildTrigger(event) : undefined;
+  if (!current) {
+    close(db, pending);
+    return;
+  }
+
+  // A sweep running late, e.g. after the server was down, must not send past
+  // the window either.
+  if (
+    pending.firstAttemptAt &&
+    Date.now() > new Date(pending.firstAttemptAt).getTime() + RETRY_WINDOW_MS
+  ) {
+    fail(db, pending, "retry window passed before the next attempt");
+    return;
+  }
+
+  const trigger = pending.trigger
+    ? savedTrigger.parse(JSON.parse(pending.trigger))
+    : current;
+  const row: Row = {
+    ...pending,
+    attempts: pending.attempts + 1,
+    firstAttemptAt: pending.firstAttemptAt ?? new Date().toISOString(),
+    trigger: pending.trigger ?? JSON.stringify(trigger),
+  };
+  // Saved before sending, so an attempt cut off by a crash still counts and
+  // the retry sends the same body.
+  update(db, pending, {
+    attempts: row.attempts,
+    firstAttemptAt: row.firstAttemptAt,
+    trigger: row.trigger,
+  });
+
+  let response: KnockResponse;
+  try {
+    response = await sender.trigger(pending.type, trigger, row.idempotencyKey);
+  } catch (error) {
+    retryLater(db, row, `network error: ${String(error)}`);
+    return;
+  }
   log(
     `[notifications] ${row.type} → recipients [${trigger.recipients
       .map((person) => person.id)
       .join(", ")}] → ${response.status} ${JSON.stringify(response.body)}`
   );
-  // Anything else stays pending. Retrying is the sweep's job.
-  if (response.status >= 200 && response.status < 300) close(db, row);
+  const reason = `${response.status} ${JSON.stringify(response.body)}`;
+  if (succeeded(response)) close(db, row);
+  else if (retryable(response)) retryLater(db, row, reason);
+  else fail(db, row, reason);
 }
 
-// Sends every pending row once, oldest first. Never throws: a row that fails
-// is logged and left pending.
+// Sends every row that is due, oldest first: not yet sent, not failed, and
+// either never tried or past its backoff. Never throws: a row whose dispatch
+// breaks is logged and left for the next run.
 export async function dispatchPendingNotifications(
   db: Db,
   sender: KnockSender,
   log: Log = console.log
 ): Promise<void> {
+  const now = new Date().toISOString();
   const rows = db
     .select()
     .from(pendingNotifications)
-    .where(isNull(pendingNotifications.sentAt))
+    .where(
+      and(
+        isNull(pendingNotifications.sentAt),
+        isNull(pendingNotifications.failedAt),
+        or(
+          isNull(pendingNotifications.nextAttemptAt),
+          lte(pendingNotifications.nextAttemptAt, now)
+        )
+      )
+    )
     .orderBy(asc(pendingNotifications.id))
     .all();
 
@@ -83,9 +206,10 @@ export async function dispatchPendingNotifications(
 }
 
 // Called once, from the server entry. Registers the kick that services call
-// after their transaction commits, and sends anything already pending. A kick
-// during a run queues one more run, so a new row is never missed. Returns a
-// function that stops the dispatcher.
+// after their transaction commits, sends anything already due, and sweeps
+// every SWEEP_INTERVAL_MS for retries and rows left by a restart. A kick or
+// sweep during a run queues one more run, so a new row is never missed.
+// Returns a function that stops the dispatcher.
 export function startNotificationDispatcher(
   db: Db,
   sender: KnockSender,
@@ -115,6 +239,12 @@ export function startNotificationDispatcher(
     setImmediate(() => void run());
   };
   setDispatcherKick(kick);
+  const sweep = setInterval(kick, SWEEP_INTERVAL_MS);
+  // The sweep alone never keeps the process alive.
+  sweep.unref();
   kick();
-  return () => setDispatcherKick(undefined);
+  return () => {
+    clearInterval(sweep);
+    setDispatcherKick(undefined);
+  };
 }
