@@ -18,6 +18,11 @@ import {
 } from "~/db/schema";
 import { formatPrice } from "~/lib/utils";
 import {
+  NotificationType,
+  kickDispatcher,
+  recordNotification,
+} from "~/lib/notifications.server";
+import {
   REFUND_COMPLETION_LIMIT,
   REFUND_WATCH_LIMIT_SECONDS,
   REFUND_WINDOW_DAYS,
@@ -361,9 +366,12 @@ export function raiseRefundRequest(
   reason: string,
   now: Date
 ): RaiseResult {
-  return db.transaction((tx) =>
+  const result = db.transaction((tx) =>
     raiseInTransaction(tx, purchaseId, buyerId, reason, now)
   );
+  // The transaction has committed: send without the buyer waiting.
+  if (result.ok) kickDispatcher();
+  return result;
 }
 
 function raiseInTransaction(
@@ -398,6 +406,11 @@ function raiseInTransaction(
     })
     .returning()
     .get();
+  recordNotification(
+    tx,
+    NotificationType.RefundRequestOpened,
+    refundRequest.id
+  );
 
   return {
     ok: true,
@@ -630,7 +643,7 @@ export function approveRefundRequest(
   note: string | null,
   now: Date
 ): DecisionResult {
-  return db.transaction((tx): DecisionResult => {
+  const result = db.transaction((tx): DecisionResult => {
     const found = findOpenRefundRequest(tx, refundRequestId);
     if (!found.ok) return found;
 
@@ -688,12 +701,19 @@ export function approveRefundRequest(
       })
       .where(eq(refunds.id, refundRequestId))
       .run();
+    recordNotification(
+      tx,
+      NotificationType.RefundRequestApproved,
+      refundRequestId
+    );
 
     return {
       ok: true,
       email: buildDecisionEmail(tx, purchase, RefundStatus.Approved, note),
     };
   });
+  if (result.ok) kickDispatcher();
+  return result;
 }
 
 /**
@@ -718,7 +738,7 @@ export function declineRefundRequest(
     };
   }
 
-  return db.transaction((tx): DecisionResult => {
+  const result = db.transaction((tx): DecisionResult => {
     const found = findOpenRefundRequest(tx, refundRequestId);
     if (!found.ok) return found;
 
@@ -731,6 +751,11 @@ export function declineRefundRequest(
       })
       .where(eq(refunds.id, refundRequestId))
       .run();
+    recordNotification(
+      tx,
+      NotificationType.RefundRequestDeclined,
+      refundRequestId
+    );
 
     return {
       ok: true,
@@ -742,6 +767,8 @@ export function declineRefundRequest(
       ),
     };
   });
+  if (result.ok) kickDispatcher();
+  return result;
 }
 
 /** The email the buyer gets once their Refund Request is decided. */

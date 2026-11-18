@@ -128,6 +128,36 @@ describe("pushToKnock", () => {
     ]);
   });
 
+  it("replaces the environment default preference set with the single false, before archiving old categories", async () => {
+    const { api, calls } = fakeKnock();
+
+    await pushToKnock(
+      api,
+      { feedChannelId: FEED_CHANNEL_ID, workflows },
+      () => {}
+    );
+
+    const defaults = calls.filter((call) =>
+      call.path.startsWith("/environments/")
+    );
+    expect(defaults).toEqual([
+      {
+        method: "PUT",
+        path: "/environments/development/defaults",
+        body: {
+          preference_set: {
+            categories: {
+              enrollments: { channel_types: { in_app_feed: false } },
+            },
+          },
+        },
+      },
+    ]);
+    expect(calls.indexOf(defaults[0])).toBeLessThan(
+      calls.findIndex((call) => call.method === "DELETE")
+    );
+  });
+
   it("stops before writing anything when the feed channel is not found", async () => {
     const { api, calls } = fakeKnock();
 
