@@ -17,6 +17,8 @@ interface DevUIProps {
   devCountry: string | null;
   countryTierInfo: { tier: number; discount: number; label: string };
   countries: { code: string; name: string }[];
+  /** Where picking a user lands. Defaults to the current page. */
+  switchUserRedirectTo?: string;
 }
 
 const roleBadgeColors: Record<string, string> = {
@@ -40,7 +42,7 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-export function DevUI({ users, currentUser, devCountry, countryTierInfo, countries }: DevUIProps) {
+export function DevUI({ users, currentUser, devCountry, countryTierInfo, countries, switchUserRedirectTo }: DevUIProps) {
   const [minimized, setMinimized] = useState(false);
   const [open, setOpen] = useState(false);
   const location = useLocation();
@@ -112,7 +114,7 @@ export function DevUI({ users, currentUser, devCountry, countryTierInfo, countri
                 <Form
                   key={user.id}
                   method="post"
-                  action={`/api/switch-user?redirectTo=${encodeURIComponent(location.pathname + location.search)}`}
+                  action={`/api/switch-user?redirectTo=${encodeURIComponent(switchUserRedirectTo ?? location.pathname + location.search)}`}
                 >
                   <input type="hidden" name="userId" value={user.id} />
                   <button

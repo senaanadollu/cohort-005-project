@@ -1,4 +1,4 @@
-import { Outlet } from "react-router";
+import { Outlet, redirect } from "react-router";
 import type { Route } from "./+types/layout.app";
 import { Sidebar } from "~/components/sidebar";
 import { DevUI } from "~/components/dev-ui";
@@ -171,9 +171,15 @@ function getRecentlyProgressedCourses(userId: number, limit: number = 3) {
     .all();
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const users = getAllUsers();
+export async function loader({ request, url }: Route.LoaderArgs) {
   const currentUserId = await getCurrentUserId(request);
+  if (!currentUserId) {
+    throw redirect(
+      `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`
+    );
+  }
+
+  const users = getAllUsers();
   const currentUser = currentUserId ? getUserById(currentUserId) : null;
   const devCountry = await getDevCountry(request);
   const countryTierInfo = getCountryTierInfo(devCountry);
