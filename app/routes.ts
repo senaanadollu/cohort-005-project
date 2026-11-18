@@ -49,6 +49,8 @@ export default [
     route("redeem/:code", "routes/redeem.$code.tsx"),
     // PROTOTYPE — Knock spike, throwaway.
     route("prototype/knock", "routes/prototype.knock.tsx"),
+    // PROTOTYPE — Notification Feed look, throwaway.
+    route("notifications", "routes/prototype.notifications.tsx"),
   ]),
   route("signup", "routes/signup.tsx"),
   route("login", "routes/login.tsx"),
@@ -56,4 +58,5 @@ export default [
   route("api/logout", "routes/api.logout.ts"),
   route("api/video-tracking", "routes/api.video-tracking.ts"),
   route("api/set-dev-country", "routes/api.set-dev-country.ts"),
+  route("api/prototype-notifications", "routes/api.prototype-notifications.ts"),
 ] satisfies RouteConfig;

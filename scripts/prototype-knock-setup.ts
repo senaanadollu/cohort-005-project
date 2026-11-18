@@ -84,6 +84,18 @@ await upsertWorkflow(
   "**{{ actor.name }}** enrolled in **{{ data.course_title }}**"
 );
 
+// PROTOTYPE (Notification Feed look): the feed renders rows itself from
+// source.key + data, so these only need an in-app step. No categories, to keep
+// the project-wide category catalog untouched.
+for (const [key, name] of [
+  ["discussion-question", "Discussion Question"],
+  ["refund-approved", "Refund Request approved"],
+  ["refund-request-opened", "New Open Refund Request"],
+  ["seat-claimed", "Claimed Seat"],
+] as const) {
+  await upsertWorkflow(key, name, [], `${name}: {{ data.subject }}`);
+}
+
 // Off by default for everyone; an Instructor opts in on their own set.
 const defaults = await mapi("PUT", `/environments/${ENV}/defaults`, {
   preference_set: {

@@ -6,6 +6,25 @@ import { Toaster } from "sonner";
 import { getCurrentUserId, getDevCountry } from "~/lib/session";
 import { getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
 import { eq, and, or, sql, desc } from "drizzle-orm";
+// PROTOTYPE — Notification Feed look. Three variants, `?variant=A|B|C`.
+import { knockUserId, signFeedToken } from "~/lib/prototype-knock.server";
+import { FeedProvider } from "~/components/prototype-notification-feed/feed";
+import {
+  PrototypeSwitcher,
+  useVariant,
+} from "~/components/prototype-notification-feed/switcher";
+import {
+  VariantASidebarItem,
+  variantAName,
+} from "~/components/prototype-notification-feed/variant-a";
+import {
+  VariantBBell,
+  variantBName,
+} from "~/components/prototype-notification-feed/variant-b";
+import {
+  VariantCSidebarItem,
+  variantCName,
+} from "~/components/prototype-notification-feed/variant-c";
 import { db } from "~/db";
 import {
   users,
@@ -213,6 +232,15 @@ export async function loader({ request }: Route.LoaderArgs) {
     countryTierInfo,
     countries: COUNTRIES,
     isTeamAdmin: currentUserId ? isTeamAdmin(currentUserId) : false,
+    // PROTOTYPE: everything the browser needs to read this user's Knock feed.
+    knock: currentUserId
+      ? {
+          knockUserId: knockUserId(currentUserId),
+          userToken: await signFeedToken(currentUserId),
+          publicKey: process.env.KNOCK_PUBLIC_API_KEY!,
+          feedChannelId: process.env.KNOCK_FEED_CHANNEL_ID!,
+        }
+      : null,
   };
 }
 
@@ -225,18 +253,36 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     countryTierInfo,
     countries,
     isTeamAdmin: userIsTeamAdmin,
+    knock,
   } = loaderData;
+  const [variant, setVariant] = useVariant();
+  const proto = knock && import.meta.env.DEV;
 
-  return (
+  const shell = (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
         currentUser={currentUser}
         recentCourses={recentCourses}
         isTeamAdmin={userIsTeamAdmin}
+        notificationsSlot={
+          proto && variant === "A" ? (
+            <VariantASidebarItem />
+          ) : proto && variant === "C" ? (
+            <VariantCSidebarItem />
+          ) : null
+        }
       />
       <main className="flex-1 overflow-y-auto">
         <Outlet />
       </main>
+      {proto && variant === "B" && <VariantBBell />}
+      {proto && (
+        <PrototypeSwitcher
+          variant={variant}
+          setVariant={setVariant}
+          names={{ A: variantAName, B: variantBName, C: variantCName }}
+        />
+      )}
       <DevUI
         users={users}
         currentUser={currentUser}
@@ -246,5 +292,13 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
       />
       <Toaster position="bottom-right" richColors closeButton />
     </div>
+  );
+
+  return proto ? (
+    <FeedProvider key={knock.knockUserId} config={knock}>
+      {shell}
+    </FeedProvider>
+  ) : (
+    shell
   );
 }
