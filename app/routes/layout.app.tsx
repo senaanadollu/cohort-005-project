@@ -25,6 +25,10 @@ import {
   VariantCSidebarItem,
   variantCName,
 } from "~/components/prototype-notification-feed/variant-c";
+import {
+  VariantDHeaderBell,
+  variantDName,
+} from "~/components/prototype-notification-feed/variant-d";
 import { db } from "~/db";
 import {
   users,
@@ -264,6 +268,9 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
         currentUser={currentUser}
         recentCourses={recentCourses}
         isTeamAdmin={userIsTeamAdmin}
+        notificationsHeaderSlot={
+          proto && variant === "D" ? <VariantDHeaderBell /> : null
+        }
         notificationsSlot={
           proto && variant === "A" ? (
             <VariantASidebarItem />
@@ -280,7 +287,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
         <PrototypeSwitcher
           variant={variant}
           setVariant={setVariant}
-          names={{ A: variantAName, B: variantBName, C: variantCName }}
+          names={{ A: variantAName, B: variantBName, C: variantCName, D: variantDName }}
         />
       )}
       <DevUI

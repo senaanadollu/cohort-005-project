@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLocation } from "react-router";
 import { toast } from "sonner";
 import { MessageSquare, Pencil, Reply, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -207,6 +207,15 @@ function CommentItem({
   const [replying, setReplying] = useState(false);
 
   const isAuthor = currentUserId !== null && comment.author.id === currentUserId;
+  // PROTOTYPE (Notification Feed): arriving from a Notification scrolls to
+  // the comment and highlights it.
+  const isTarget = useLocation().hash === `#comment-${comment.id}`;
+  useEffect(() => {
+    if (isTarget)
+      document
+        .getElementById(`comment-${comment.id}`)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [isTarget, comment.id]);
 
   if (comment.deleted) {
     return (
@@ -225,7 +234,14 @@ function CommentItem({
   }
 
   return (
-    <div className={cn("py-3", isReply && "border-l pl-4")}>
+    <div
+      id={`comment-${comment.id}`}
+      className={cn(
+        "py-3",
+        isReply && "border-l pl-4",
+        isTarget && "rounded-md bg-primary/10 ring-2 ring-primary/40"
+      )}
+    >
       <div className="flex items-start gap-3">
         <UserAvatar
           name={comment.author.name}

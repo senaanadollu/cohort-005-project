@@ -7,7 +7,7 @@ import { useFetcher, useSearchParams } from "react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useFeed } from "./feed";
 
-export const VARIANTS = ["A", "B", "C"] as const;
+export const VARIANTS = ["A", "B", "C", "D"] as const;
 export type Variant = (typeof VARIANTS)[number];
 const STORAGE_KEY = "prototype-notification-feed-variant";
 
@@ -16,7 +16,7 @@ const STORAGE_KEY = "prototype-notification-feed-variant";
 export function useVariant(): [Variant, (v: Variant) => void] {
   const [params, setParams] = useSearchParams();
   const fromUrl = params.get("variant")?.toUpperCase() as Variant | undefined;
-  const [stored, setStored] = useState<Variant>("A");
+  const [stored, setStored] = useState<Variant>("D");
   useEffect(() => {
     const s = sessionStorage.getItem(STORAGE_KEY) as Variant | null;
     if (s && VARIANTS.includes(s)) setStored(s);

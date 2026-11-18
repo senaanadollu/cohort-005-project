@@ -57,7 +57,7 @@ export async function notifyDiscussionReply(replyId: number) {
       // Feed prototype fields: the feed renders rows from these.
       subject: lesson?.title ?? "a lesson",
       excerpt: reply.body.slice(0, 140),
-      url: lesson ? lessonUrl(lesson.id) : "/",
+      url: lesson ? `${lessonUrl(lesson.id)}#comment-${reply.id}` : "/",
     },
   });
 }
@@ -97,17 +97,31 @@ export async function sendSampleNotifications(
       data,
     });
 
+  // Point the discussion samples at real comments so the deep link lands on
+  // something: the excerpt text is made up, the target comment is real.
+  const allComments = db.select().from(comments).all().filter((c) => !c.deletedAt);
+  const realReplies = allComments.filter((c) => c.parentId !== null);
+  const realQuestions = allComments.filter((c) => c.parentId === null);
+  const commentUrl = (pool: typeof allComments, i: number) => {
+    const c = pool[i % Math.max(1, pool.length)];
+    return c ? `${lessonUrl(c.lessonId)}#comment-${c.id}` : lessonUrl(lesson.id);
+  };
+  const lessonTitle = (pool: typeof allComments, i: number) => {
+    const c = pool[i % Math.max(1, pool.length)];
+    const l = c && db.select().from(lessons).where(eq(lessons.id, c.lessonId)).get();
+    return l?.title ?? lesson.title;
+  };
   const reply = (i: number, excerpt: string) =>
     send("discussion-reply", pick(i).id, {
-      subject: lesson.title,
+      subject: lessonTitle(realReplies, i),
       excerpt,
-      url: lessonUrl(lesson.id),
+      url: commentUrl(realReplies, i),
     });
   const question = (i: number, excerpt: string) =>
     send("discussion-question", pick(i).id, {
-      subject: lesson.title,
+      subject: lessonTitle(realQuestions, i),
       excerpt,
-      url: lessonUrl(lesson.id),
+      url: commentUrl(realQuestions, i),
     });
   const refundOpened = (i: number, excerpt: string) =>
     send("refund-request-opened", pick(i).id, {

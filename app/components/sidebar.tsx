@@ -43,6 +43,7 @@ interface SidebarProps {
   isTeamAdmin?: boolean;
   // PROTOTYPE (Notification Feed): where a variant puts its nav entry.
   notificationsSlot?: React.ReactNode;
+  notificationsHeaderSlot?: React.ReactNode;
 }
 
 interface NavItem {
@@ -120,6 +121,7 @@ export function Sidebar({
   recentCourses = [],
   isTeamAdmin = false,
   notificationsSlot,
+  notificationsHeaderSlot,
 }: SidebarProps) {
   const currentUserRole = currentUser?.role ?? null;
   const [isDark, setIsDark] = useState(false);
@@ -143,6 +145,9 @@ export function Sidebar({
         <NavLink to="/" className="text-lg font-bold tracking-tight">
           Cadence
         </NavLink>
+        {notificationsHeaderSlot && (
+          <div className="ml-auto">{notificationsHeaderSlot}</div>
+        )}
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
