@@ -59,4 +59,54 @@ describe("makeIndividualPurchase", () => {
     ).toThrow();
     expect(db.select().from(schema.purchases).all()).toHaveLength(0);
   });
+
+  it("records a New Enrollment Notification for the Enrollment", () => {
+    const result = makeIndividualPurchase(
+      db,
+      base.user.id,
+      base.course.id,
+      7900,
+      "US"
+    );
+    if (!result.ok) throw new Error(result.error);
+
+    expect(db.select().from(schema.pendingNotifications).all()).toMatchObject([
+      {
+        type: "new-enrollment",
+        subjectId: result.enrollment.id,
+        idempotencyKey: `new-enrollment:${result.enrollment.id}`,
+      },
+    ]);
+  });
+
+  it("records a New Enrollment Notification when a Lapsed Student enrols again", () => {
+    makeIndividualPurchase(db, base.user.id, base.course.id, 7900, "US");
+    db.delete(schema.enrollments).run();
+
+    const again = makeIndividualPurchase(
+      db,
+      base.user.id,
+      base.course.id,
+      7900,
+      "US"
+    );
+    if (!again.ok) throw new Error(again.error);
+
+    expect(
+      db
+        .select()
+        .from(schema.pendingNotifications)
+        .all()
+        .map((row) => row.idempotencyKey)
+    ).toContain(`new-enrollment:${again.enrollment.id}`);
+  });
+
+  it("records no Notification when the buyer is already enrolled", () => {
+    db.insert(schema.enrollments)
+      .values({ userId: base.user.id, courseId: base.course.id })
+      .run();
+    makeIndividualPurchase(db, base.user.id, base.course.id, 7900, null);
+
+    expect(db.select().from(schema.pendingNotifications).all()).toEqual([]);
+  });
 });

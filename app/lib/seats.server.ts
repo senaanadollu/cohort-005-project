@@ -6,6 +6,11 @@ import {
   type Db,
   type Enrollment,
 } from "~/lib/enrollments.server";
+import {
+  NotificationType,
+  kickDispatcher,
+  recordNotification,
+} from "~/lib/notifications.server";
 import { getSeatAvailability } from "~/lib/refunds.server";
 
 // ─── Seats ───
@@ -36,7 +41,7 @@ export function claimSeat(
   country: string,
   now: Date
 ): ClaimSeatResult {
-  return db.transaction((tx): ClaimSeatResult => {
+  const result = db.transaction((tx): ClaimSeatResult => {
     const seat = tx.select().from(coupons).where(eq(coupons.code, code)).get();
     if (!seat) {
       return { ok: false, error: "Coupon not found" };
@@ -77,6 +82,10 @@ export function claimSeat(
       .where(eq(coupons.id, seat.id))
       .run();
 
-    return { ok: true, enrollment: enroll(tx, studentId, seat.courseId) };
+    const enrollment = enroll(tx, studentId, seat.courseId);
+    recordNotification(tx, NotificationType.SeatClaimed, seat.id);
+    return { ok: true, enrollment };
   });
+  if (result.ok) kickDispatcher();
+  return result;
 }

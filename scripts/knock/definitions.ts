@@ -67,4 +67,32 @@ export const WORKFLOWS: WorkflowDefinition[] = [
         "{{ data.decision_note }}",
     },
   },
+  {
+    key: NotificationType.SeatClaimed,
+    name: "Claimed Seat",
+    category: "team",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** claimed a Seat on **{{ data.course_title }}**. " +
+        "{{ data.seats_left }} left.",
+    },
+  },
+  {
+    key: NotificationType.NewEnrollment,
+    name: "New Enrollment",
+    category: "enrollments",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** enrolled in **{{ data.course_title }}**.",
+    },
+  },
 ];
+
+// The environment default preference set: one `false`, Enrollments off on the
+// in-app feed channel until a person opts in. Everything unset defaults to on.
+// It replaces the whole set, including what the prototypes left behind.
+export const DEFAULT_PREFERENCE_SET = {
+  categories: {
+    enrollments: { channel_types: { in_app_feed: false } },
+  },
+};

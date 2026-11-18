@@ -49,6 +49,8 @@ export enum NotificationType {
   RefundRequestOpened = "refund-request-opened",
   RefundRequestApproved = "refund-request-approved",
   RefundRequestDeclined = "refund-request-declined",
+  SeatClaimed = "seat-claimed",
+  NewEnrollment = "new-enrollment",
 }
 
 // ─── Tables ───
