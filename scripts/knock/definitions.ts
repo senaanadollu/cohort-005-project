@@ -37,4 +37,34 @@ export const WORKFLOWS: WorkflowDefinition[] = [
         "**{{ data.lesson_title }}**: {{ data.snippet }}",
     },
   },
+  {
+    key: NotificationType.RefundRequestOpened,
+    name: "Refund Request opened",
+    category: "refunds",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** asked for a refund of **{{ data.course_title }}**: " +
+        "{{ data.reason }}",
+    },
+  },
+  {
+    key: NotificationType.RefundRequestApproved,
+    name: "Refund Request approved",
+    category: "refunds",
+    feed: {
+      markdownBody:
+        "Your refund request for **{{ data.course_title }}** was approved. " +
+        "{{ data.decision_note }}",
+    },
+  },
+  {
+    key: NotificationType.RefundRequestDeclined,
+    name: "Refund Request declined",
+    category: "refunds",
+    feed: {
+      markdownBody:
+        "Your refund request for **{{ data.course_title }}** was declined. " +
+        "{{ data.decision_note }}",
+    },
+  },
 ];

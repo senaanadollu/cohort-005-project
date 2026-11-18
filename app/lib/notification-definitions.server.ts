@@ -1,6 +1,11 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { comments, courses, lessons, modules, users } from "~/db/schema";
 import { NotificationType, type Queryable } from "~/lib/notifications.server";
+import {
+  refundRequestApproved,
+  refundRequestDeclined,
+  refundRequestOpened,
+} from "~/lib/refund-notifications.server";
 
 // ─── What each Notification says, and to whom ───
 // One builder per NotificationType. The dispatcher calls it when it sends, so
@@ -99,4 +104,7 @@ export const notificationBuilders: Record<
   NotificationBuilder
 > = {
   [NotificationType.DiscussionReply]: discussionReply,
+  [NotificationType.RefundRequestOpened]: refundRequestOpened,
+  [NotificationType.RefundRequestApproved]: refundRequestApproved,
+  [NotificationType.RefundRequestDeclined]: refundRequestDeclined,
 };
