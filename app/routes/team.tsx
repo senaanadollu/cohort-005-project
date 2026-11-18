@@ -25,6 +25,7 @@ import {
   type SeatAvailability,
 } from "~/lib/refunds.server";
 import { formatPrice } from "~/lib/utils";
+import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
 
 function getTeamForAdmin(userId: number) {
   const membership = db
@@ -199,6 +200,13 @@ function CopyButton({ code }: { code: string }) {
 export default function Team({ loaderData }: Route.ComponentProps) {
   const { courseStats, couponRows, teamLicences } = loaderData;
   const [courseFilter, setCourseFilter] = useState<number | "all">("all");
+  const highlightedSeatId = useHighlightedId("seat");
+
+  // A link to a Seat must find its row, so it clears any course filter.
+  useEffect(() => {
+    if (highlightedSeatId !== null) setCourseFilter("all");
+  }, [highlightedSeatId]);
+  useScrollToHighlight(highlightedSeatId);
 
   const filteredCoupons =
     courseFilter === "all"
@@ -309,7 +317,11 @@ export default function Team({ loaderData }: Route.ComponentProps) {
               </thead>
               <tbody>
                 {filteredCoupons.map((coupon) => (
-                  <tr key={coupon.id} className="border-b last:border-0">
+                  <tr
+                    key={coupon.id}
+                    className="border-b last:border-0"
+                    data-highlighted={coupon.id === highlightedSeatId || undefined}
+                  >
                     <td className="px-4 py-3">
                       <code className="rounded bg-muted px-2 py-0.5 text-xs">
                         {coupon.code}

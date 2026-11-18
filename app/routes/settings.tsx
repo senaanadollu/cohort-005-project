@@ -17,6 +17,7 @@ import { db } from "~/db";
 import { eq } from "drizzle-orm";
 import { formatPrice } from "~/lib/utils";
 import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
+import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
 
 const settingsSchema = z.object({
   name: z.string().trim().min(1, "Name cannot be empty."),
@@ -102,6 +103,8 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
   const openCount = refundRequests.filter(
     (refundRequest) => refundRequest.status === RefundStatus.Open
   ).length;
+  const highlightedId = useHighlightedId("refundRequest");
+  useScrollToHighlight(highlightedId);
   const fetcher = useFetcher();
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -202,7 +205,13 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {refundRequests.map((refundRequest) => (
-              <div key={refundRequest.id} className="rounded-md border p-3">
+              <div
+                key={refundRequest.id}
+                className="rounded-md border p-3"
+                data-highlighted={
+                  refundRequest.id === highlightedId || undefined
+                }
+              >
                 <div className="flex items-start justify-between gap-3">
                   <Link
                     to={`/courses/${refundRequest.courseSlug}`}

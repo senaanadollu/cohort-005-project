@@ -8,6 +8,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { UserAvatar } from "~/components/user-avatar";
 import { cn, formatRelativeTime } from "~/lib/utils";
 import { MAX_COMMENT_LENGTH } from "~/lib/comments";
+import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
 
 // Bodies arrive pre-rendered from the server (renderComment), because comments
 // are untrusted markdown and the sanitising renderer is server-only.
@@ -205,12 +206,13 @@ function CommentItem({
 }) {
   const [editing, setEditing] = useState(false);
   const [replying, setReplying] = useState(false);
+  const highlighted = useHighlightedId("comment") === comment.id;
 
   const isAuthor = currentUserId !== null && comment.author.id === currentUserId;
 
   if (comment.deleted) {
     return (
-      <div className="py-3">
+      <div className="py-3" data-highlighted={highlighted || undefined}>
         <p className="text-sm italic text-muted-foreground">
           This comment was deleted.
         </p>
@@ -225,7 +227,10 @@ function CommentItem({
   }
 
   return (
-    <div className={cn("py-3", isReply && "border-l pl-4")}>
+    <div
+      className={cn("py-3", isReply && "border-l pl-4")}
+      data-highlighted={highlighted || undefined}
+    >
       <div className="flex items-start gap-3">
         <UserAvatar
           name={comment.author.name}
@@ -352,6 +357,8 @@ export function CommentThread({
   canPost: boolean;
   instructorName: string;
 }) {
+  useScrollToHighlight(useHighlightedId("comment"));
+
   return (
     <Card className="mb-8">
       <CardContent className="p-6">
