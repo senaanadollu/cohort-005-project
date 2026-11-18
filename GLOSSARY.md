@@ -106,9 +106,25 @@ _Avoid_: Watch cap, Viewing threshold
 ### Notifications
 
 **Notification**:
-A message Cadence sends a person to tell them something that concerns them has happened.
+A message Cadence sends a person to tell them something that concerns them has happened, caused by someone else or by Cadence itself.
 _Avoid_: Alert, Message, Activity
 
 **Notification Feed**:
 The place inside Cadence where a person sees their Notifications.
 _Avoid_: Inbox, Activity feed
+
+**Channel**:
+A way a Notification reaches a person. Cadence has two: the Notification Feed and email.
+_Avoid_: Medium, Transport
+
+**Notification Category**:
+A group of Notifications a person controls together. Cadence has four: Discussions, Refunds, Team and Enrollments.
+_Avoid_: Group, Topic, Notification type
+
+**Notification Preference**:
+A person's choice of whether a Notification Category reaches them on a Channel.
+_Avoid_: Notification setting, Subscription, Mute
+
+**Receipt**:
+An email confirming something a person did themselves. It is not a Notification: it never appears in the Notification Feed and can't be switched off.
+_Avoid_: Confirmation email, Transactional email
