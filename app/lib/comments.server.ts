@@ -2,7 +2,7 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { eq } from "drizzle-orm";
 import * as schema from "~/db/schema";
 import { comments, lessons } from "~/db/schema";
-import { MAX_COMMENT_LENGTH, MIN_COMMENT_LENGTH } from "~/lib/comments";
+import { validateCommentBody } from "~/lib/comments";
 
 // ─── Comments ───
 // Creating a comment: a Discussion Question (top-level) or a Discussion Reply
@@ -27,16 +27,9 @@ export function createComment(
   parentId: number | null,
   body: string
 ): CreateCommentResult {
-  const trimmed = body.trim();
-  if (trimmed.length < MIN_COMMENT_LENGTH) {
-    return { ok: false, error: "Comment cannot be empty" };
-  }
-  if (trimmed.length > MAX_COMMENT_LENGTH) {
-    return {
-      ok: false,
-      error: `Comment must be ${MAX_COMMENT_LENGTH} characters or fewer`,
-    };
-  }
+  const validated = validateCommentBody(body);
+  if (!validated.ok) return validated;
+  const { trimmed } = validated;
 
   return db.transaction((tx): CreateCommentResult => {
     const lesson = tx
@@ -70,7 +63,7 @@ export function createComment(
 
     const comment = tx
       .insert(comments)
-      .values({ userId, lessonId, parentId, body: body.trim() })
+      .values({ userId, lessonId, parentId, body: trimmed })
       .returning()
       .get();
 

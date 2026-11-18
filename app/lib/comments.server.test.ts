@@ -146,5 +146,7 @@ describe("createComment", () => {
       ok: false,
       error: "Replies can only be one level deep",
     });
+    // The refused reply left no row behind: just the question and its reply.
+    expect(db.select().from(schema.comments).all()).toHaveLength(2);
   });
 });

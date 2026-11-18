@@ -9,7 +9,7 @@ import {
   CommentThread,
   type RenderedComment,
 } from "~/components/comment-thread";
-import { MIN_COMMENT_LENGTH, MAX_COMMENT_LENGTH } from "~/lib/comments";
+import { validateCommentBody } from "~/lib/comments";
 import { createComment } from "~/lib/comments.server";
 import { db } from "~/db";
 import {
@@ -329,16 +329,11 @@ function getCommentById(commentId: number) {
 }
 
 function assertValidBody(body: string) {
-  const trimmed = body.trim();
-  if (trimmed.length < MIN_COMMENT_LENGTH) {
-    throw new Error("Comment cannot be empty");
+  const validated = validateCommentBody(body);
+  if (!validated.ok) {
+    throw new Error(validated.error);
   }
-  if (trimmed.length > MAX_COMMENT_LENGTH) {
-    throw new Error(
-      `Comment must be ${MAX_COMMENT_LENGTH} characters or fewer`
-    );
-  }
-  return trimmed;
+  return validated.trimmed;
 }
 
 function getLessonThread(lessonId: number): ThreadComment[] {
