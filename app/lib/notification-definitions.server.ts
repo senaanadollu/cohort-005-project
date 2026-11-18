@@ -1,5 +1,14 @@
-import { and, eq, isNull } from "drizzle-orm";
-import { comments, courses, lessons, modules, users } from "~/db/schema";
+import { and, count, eq, isNull } from "drizzle-orm";
+import {
+  comments,
+  coupons,
+  courses,
+  enrollments,
+  lessons,
+  modules,
+  purchases,
+  users,
+} from "~/db/schema";
 import { NotificationType, type Queryable } from "~/lib/notifications.server";
 
 // ─── What each Notification says, and to whom ───
@@ -93,10 +102,95 @@ function discussionReply(
   };
 }
 
+// Subject: the Seat. Recipient: the Team Admin who owns the Team Licence (the
+// buyer of the Purchase that granted the Seat). Actor: the Student who claimed
+// it. `seats_left` is the licence's Unclaimed Seats at the time of sending.
+function seatClaimed(db: Queryable, seatId: number): NotificationEvent | null {
+  const seat = db.select().from(coupons).where(eq(coupons.id, seatId)).get();
+  if (!seat || seat.redeemedByUserId === null) return null;
+
+  const purchase = db
+    .select()
+    .from(purchases)
+    .where(eq(purchases.id, seat.purchaseId))
+    .get();
+  const course = db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, seat.courseId))
+    .get();
+  const actor = user(db, seat.redeemedByUserId);
+  const teamAdmin = purchase ? user(db, purchase.userId) : undefined;
+  if (!purchase || !course || !actor || !teamAdmin) return null;
+
+  const unclaimed = db
+    .select({ total: count() })
+    .from(coupons)
+    .where(
+      and(
+        eq(coupons.purchaseId, seat.purchaseId),
+        isNull(coupons.redeemedByUserId)
+      )
+    )
+    .get();
+
+  return {
+    actor,
+    recipients: [teamAdmin],
+    data: {
+      seat_id: seat.id,
+      student_name: actor.name,
+      course_id: course.id,
+      course_title: course.title,
+      seats_left: unclaimed?.total ?? 0,
+      target_path: `/team?seat=${seat.id}`,
+    },
+  };
+}
+
+// Subject: the Enrollment. Recipient: the course's Instructor. Actor: the
+// Student who enrolled. Always triggered; the Enrollments preference (off by
+// default) suppresses it in Knock.
+function newEnrollment(
+  db: Queryable,
+  enrollmentId: number
+): NotificationEvent | null {
+  const enrollment = db
+    .select()
+    .from(enrollments)
+    .where(eq(enrollments.id, enrollmentId))
+    .get();
+  if (!enrollment) return null;
+
+  const course = db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, enrollment.courseId))
+    .get();
+  const actor = user(db, enrollment.userId);
+  const instructor = course ? user(db, course.instructorId) : undefined;
+  if (!course || !actor || !instructor) return null;
+
+  return {
+    actor,
+    recipients: [instructor],
+    data: {
+      enrollment_id: enrollment.id,
+      student_id: actor.id,
+      student_name: actor.name,
+      course_id: course.id,
+      course_title: course.title,
+      target_path: `/instructor/${course.id}/students?student=${actor.id}`,
+    },
+  };
+}
+
 // Adding a NotificationType without a builder here is a type error.
 export const notificationBuilders: Record<
   NotificationType,
   NotificationBuilder
 > = {
   [NotificationType.DiscussionReply]: discussionReply,
+  [NotificationType.SeatClaimed]: seatClaimed,
+  [NotificationType.NewEnrollment]: newEnrollment,
 };

@@ -2,6 +2,11 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { and, eq } from "drizzle-orm";
 import * as schema from "~/db/schema";
 import { enrollments, purchases } from "~/db/schema";
+import {
+  NotificationType,
+  kickDispatcher,
+  recordNotification,
+} from "~/lib/notifications.server";
 
 // ─── Enrollments ───
 // Creating an Enrollment, and the Individual Purchase that grants one. A Seat
@@ -36,13 +41,21 @@ export function findEnrollment(
  * Gives a Student an Enrollment on a course, including a Lapsed Student
  * enrolling again. Every Enrollment is created here, inside the caller's
  * transaction (docs/adr/0013). The caller checks the Student isn't enrolled.
+ * Records the New Enrollment Notification; the caller kicks the dispatcher
+ * once its transaction has committed.
  */
 export function enroll(
   tx: Queryable,
   userId: number,
   courseId: number
 ): Enrollment {
-  return tx.insert(enrollments).values({ userId, courseId }).returning().get();
+  const enrollment = tx
+    .insert(enrollments)
+    .values({ userId, courseId })
+    .returning()
+    .get();
+  recordNotification(tx, NotificationType.NewEnrollment, enrollment.id);
+  return enrollment;
 }
 
 export type IndividualPurchaseResult =
@@ -57,7 +70,7 @@ export function makeIndividualPurchase(
   amountPaid: number,
   country: string | null
 ): IndividualPurchaseResult {
-  return db.transaction((tx): IndividualPurchaseResult => {
+  const result = db.transaction((tx): IndividualPurchaseResult => {
     if (findEnrollment(tx, buyerId, courseId)) {
       return { ok: false, error: "already_enrolled" };
     }
@@ -70,4 +83,6 @@ export function makeIndividualPurchase(
 
     return { ok: true, purchase, enrollment: enroll(tx, buyerId, courseId) };
   });
+  if (result.ok) kickDispatcher();
+  return result;
 }
