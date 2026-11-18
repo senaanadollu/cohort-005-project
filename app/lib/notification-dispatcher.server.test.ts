@@ -52,6 +52,17 @@ function post(userId: number, parentId: number | null, body: string) {
   return result.comment;
 }
 
+// Asks a Discussion Question whose own Notification is already settled, so a
+// test about the Reply that follows sees only the Reply's trigger.
+function askQuestion(userId: number, body: string) {
+  const question = post(userId, null, body);
+  db.update(schema.pendingNotifications)
+    .set({ sentAt: new Date().toISOString() })
+    .where(eq(schema.pendingNotifications.subjectId, question.id))
+    .run();
+  return question;
+}
+
 beforeEach(() => {
   lines.length = 0;
   db = createTestDb();
@@ -70,7 +81,7 @@ beforeEach(() => {
 
 describe("dispatching a Discussion Reply", () => {
   it("triggers discussion-reply for the question's author, with the replier as actor", async () => {
-    const question = post(base.user.id, null, "How do generics work?");
+    const question = askQuestion(base.user.id, "How do generics work?");
     const reply = post(base.instructor.id, question.id, "Like this.");
     const { sender, sent } = fakeSender();
 
@@ -105,7 +116,7 @@ describe("dispatching a Discussion Reply", () => {
         },
       },
     ]);
-    expect(rows()[0].sentAt).not.toBeNull();
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
   });
 
   it("identifies people with their avatar when they have one", async () => {
@@ -113,7 +124,7 @@ describe("dispatching a Discussion Reply", () => {
       .set({ avatarUrl: "https://example.com/u.png" })
       .where(eq(schema.users.id, base.user.id))
       .run();
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "Like this.");
     const { sender, sent } = fakeSender();
 
@@ -126,7 +137,7 @@ describe("dispatching a Discussion Reply", () => {
   });
 
   it("reads the current names when it sends, not those at the time of the reply", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "Like this.");
     db.update(schema.users)
       .set({ name: "Renamed Instructor" })
@@ -140,7 +151,7 @@ describe("dispatching a Discussion Reply", () => {
   });
 
   it("cuts a long reply down to a snippet", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "a".repeat(600));
     const { sender, sent } = fakeSender();
 
@@ -150,18 +161,18 @@ describe("dispatching a Discussion Reply", () => {
   });
 
   it("drops the actor, so a reply by the question's own author closes the row without a trigger", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.user.id, question.id, "Never mind, solved it.");
     const { sender, sent } = fakeSender();
 
     await dispatchPendingNotifications(db, sender, log);
 
     expect(sent).toEqual([]);
-    expect(rows()[0].sentAt).not.toBeNull();
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
   });
 
   it("closes the row without a trigger when the reply has since been deleted", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     const reply = post(base.instructor.id, question.id, "Like this.");
     db.update(schema.comments)
       .set({ deletedAt: new Date().toISOString() })
@@ -172,11 +183,11 @@ describe("dispatching a Discussion Reply", () => {
     await dispatchPendingNotifications(db, sender, log);
 
     expect(sent).toEqual([]);
-    expect(rows()[0].sentAt).not.toBeNull();
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
   });
 
   it("closes the row without a trigger when the question has since been deleted", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "Like this.");
     db.update(schema.comments)
       .set({ deletedAt: new Date().toISOString() })
@@ -187,7 +198,93 @@ describe("dispatching a Discussion Reply", () => {
     await dispatchPendingNotifications(db, sender, log);
 
     expect(sent).toEqual([]);
-    expect(rows()[0].sentAt).not.toBeNull();
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
+  });
+});
+
+describe("dispatching a Discussion Question", () => {
+  it("triggers discussion-question for the course's Instructor, with the asker as actor", async () => {
+    const question = post(base.user.id, null, "How do generics work?");
+    const { sender, sent } = fakeSender();
+
+    await dispatchPendingNotifications(db, sender, log);
+
+    expect(sent).toEqual([
+      {
+        workflowKey: "discussion-question",
+        idempotencyKey: `discussion-question:${question.id}`,
+        trigger: {
+          actor: {
+            id: String(base.user.id),
+            name: "Test User",
+            email: "test@example.com",
+          },
+          recipients: [
+            {
+              id: String(base.instructor.id),
+              name: "Test Instructor",
+              email: "instructor@example.com",
+            },
+          ],
+          data: {
+            lesson_id: lessonId,
+            lesson_title: "Generics",
+            course_id: base.course.id,
+            course_title: "Test Course",
+            comment_id: question.id,
+            snippet: "How do generics work?",
+            target_path: `/courses/test-course/lessons/${lessonId}?comment=${question.id}`,
+          },
+        },
+      },
+    ]);
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
+  });
+
+  it("notifies the Instructor when a Platform Admin asks", async () => {
+    const admin = db
+      .insert(schema.users)
+      .values({
+        name: "Admin",
+        email: "admin@example.com",
+        role: schema.UserRole.Admin,
+      })
+      .returning()
+      .get();
+    post(admin.id, null, "Is this current?");
+    const { sender, sent } = fakeSender();
+
+    await dispatchPendingNotifications(db, sender, log);
+
+    expect(sent).toHaveLength(1);
+    expect(sent[0].trigger.actor.id).toBe(String(admin.id));
+    expect(sent[0].trigger.recipients.map((r) => r.id)).toEqual([
+      String(base.instructor.id),
+    ]);
+  });
+
+  it("drops the actor, so the Instructor asking on their own course closes the row without a trigger", async () => {
+    post(base.instructor.id, null, "Pinned question.");
+    const { sender, sent } = fakeSender();
+
+    await dispatchPendingNotifications(db, sender, log);
+
+    expect(sent).toEqual([]);
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
+  });
+
+  it("closes the row without a trigger when the question has since been deleted", async () => {
+    const question = post(base.user.id, null, "How?");
+    db.update(schema.comments)
+      .set({ deletedAt: new Date().toISOString() })
+      .where(eq(schema.comments.id, question.id))
+      .run();
+    const { sender, sent } = fakeSender();
+
+    await dispatchPendingNotifications(db, sender, log);
+
+    expect(sent).toEqual([]);
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
   });
 });
 
@@ -196,7 +293,7 @@ describe("the dispatcher", () => {
     const { sender, sent } = fakeSender();
     const stop = startNotificationDispatcher(db, sender, log);
     try {
-      const question = post(base.user.id, null, "How?");
+      const question = askQuestion(base.user.id, "How?");
       const reply = post(base.instructor.id, question.id, "Like this.");
       // Nothing is sent while the poster's request is still running.
       expect(sent).toEqual([]);
@@ -209,7 +306,7 @@ describe("the dispatcher", () => {
   });
 
   it("sends each row once", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "Like this.");
     const { sender, sent } = fakeSender();
 
@@ -220,7 +317,7 @@ describe("the dispatcher", () => {
   });
 
   it("logs one line per trigger with the workflow key, recipients and Knock's response", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "Like this.");
     const { sender } = fakeSender({
       status: 200,
@@ -237,7 +334,7 @@ describe("the dispatcher", () => {
   });
 
   it("marks the row sent when the logging stand-in is used in place of Knock", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "Like this.");
     const printed: string[] = [];
 
@@ -248,21 +345,21 @@ describe("the dispatcher", () => {
     );
 
     expect(printed[0]).toContain("would trigger discussion-reply");
-    expect(rows()[0].sentAt).not.toBeNull();
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
   });
 
   it("leaves the row pending when Knock refuses the trigger", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "Like this.");
     const { sender } = fakeSender({ status: 500, body: "boom" });
 
     await dispatchPendingNotifications(db, sender, log);
 
-    expect(rows()[0].sentAt).toBeNull();
+    expect(rows().slice(-1)[0].sentAt).toBeNull();
   });
 
   it("leaves the row pending, and does not throw, when the sender throws", async () => {
-    const question = post(base.user.id, null, "How?");
+    const question = askQuestion(base.user.id, "How?");
     post(base.instructor.id, question.id, "Like this.");
     const sender: KnockSender = {
       async trigger() {
@@ -273,6 +370,6 @@ describe("the dispatcher", () => {
     await expect(
       dispatchPendingNotifications(db, sender, log)
     ).resolves.toBeUndefined();
-    expect(rows()[0].sentAt).toBeNull();
+    expect(rows().slice(-1)[0].sentAt).toBeNull();
   });
 });

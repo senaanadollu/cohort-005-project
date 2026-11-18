@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createTestDb, seedBaseData } from "~/test/setup";
 import * as schema from "~/db/schema";
-import { createComment } from "./comments.server";
+import { createComment, deleteComment } from "./comments.server";
+import type { KnockMessages } from "./knock.server";
 import { setDispatcherKick } from "./notifications.server";
 
 type TestDb = ReturnType<typeof createTestDb>;
@@ -154,7 +155,11 @@ describe("createComment", () => {
 
 describe("createComment records Notifications", () => {
   function pendingNotifications() {
-    return db.select().from(schema.pendingNotifications).all();
+    return db
+      .select()
+      .from(schema.pendingNotifications)
+      .all()
+      .filter((row) => row.type === schema.NotificationType.DiscussionReply);
   }
 
   it("records a Discussion Reply Notification with the reply", () => {
@@ -250,5 +255,190 @@ describe("createComment records Notifications", () => {
       )
     ).toThrow();
     expect(db.select().from(schema.comments).all()).toHaveLength(1);
+  });
+});
+
+describe("recording a Discussion Question", () => {
+  it("records a discussion-question row for a Discussion Question", () => {
+    const question = createComment(db, base.user.id, lessonId, null, "How?");
+    if (!question.ok) throw new Error("setup failed");
+
+    expect(db.select().from(schema.pendingNotifications).all()).toMatchObject([
+      {
+        type: "discussion-question",
+        subjectId: question.comment.id,
+        idempotencyKey: `discussion-question:${question.comment.id}`,
+        sentAt: null,
+      },
+    ]);
+  });
+
+  it("records a discussion-reply row, not a second discussion-question row, for a Reply", () => {
+    const question = createComment(db, base.user.id, lessonId, null, "How?");
+    if (!question.ok) throw new Error("setup failed");
+    createComment(db, base.instructor.id, lessonId, question.comment.id, "So.");
+
+    expect(
+      db
+        .select()
+        .from(schema.pendingNotifications)
+        .all()
+        .map((row) => row.type)
+    ).toEqual(["discussion-question", "discussion-reply"]);
+  });
+});
+
+describe("deleteComment", () => {
+  // Knock holds one message per comment, found under its workflow.
+  function fakeMessages() {
+    const archived: string[] = [];
+    const listedFor: string[] = [];
+    const messages: KnockMessages = {
+      async list(workflowKey, triggerData) {
+        listedFor.push(`${workflowKey}:${JSON.stringify(triggerData)}`);
+        return {
+          items: [
+            { id: `msg-${workflowKey}`, data: { comment_id: 1 } },
+            { id: `msg-${workflowKey}`, data: { comment_id: 2 } },
+          ],
+        };
+      },
+      async archive(ids) {
+        archived.push(...ids);
+      },
+    };
+    return { messages, archived, listedFor };
+  }
+
+  function ask() {
+    const question = createComment(db, base.user.id, lessonId, null, "How?");
+    if (!question.ok) throw new Error("setup failed");
+    return question.comment;
+  }
+
+  it("soft deletes the comment for its author", () => {
+    const question = ask();
+
+    const deleted = deleteComment(
+      db,
+      question.id,
+      base.user.id,
+      false,
+      fakeMessages().messages
+    );
+
+    expect(deleted.deletedAt).not.toBeNull();
+  });
+
+  it("lets staff delete someone else's comment, and refuses anyone else", () => {
+    const question = ask();
+    const { messages } = fakeMessages();
+
+    expect(() =>
+      deleteComment(db, question.id, base.instructor.id, false, messages)
+    ).toThrow("You can only delete your own comments");
+    expect(
+      deleteComment(db, question.id, base.instructor.id, true, messages)
+        .deletedAt
+    ).not.toBeNull();
+  });
+
+  it("throws for a comment that does not exist", () => {
+    expect(() =>
+      deleteComment(db, 9999, base.user.id, false, fakeMessages().messages)
+    ).toThrow("Comment not found");
+  });
+
+  it("archives the Discussion Question's Notification in Knock", async () => {
+    const question = ask();
+    const { messages, archived, listedFor } = fakeMessages();
+
+    deleteComment(db, question.id, base.user.id, false, messages);
+
+    await vi.waitFor(() => expect(archived).toHaveLength(1));
+    expect(listedFor).toEqual([
+      `discussion-question:{"comment_id":${question.id}}`,
+    ]);
+  });
+
+  it("archives a Discussion Reply's Notification under the discussion-reply workflow", async () => {
+    const question = ask();
+    const reply = createComment(
+      db,
+      base.instructor.id,
+      lessonId,
+      question.id,
+      "So."
+    );
+    if (!reply.ok) throw new Error("setup failed");
+    const { messages, listedFor } = fakeMessages();
+
+    deleteComment(db, reply.comment.id, base.instructor.id, false, messages);
+
+    await vi.waitFor(() => expect(listedFor).toHaveLength(1));
+    expect(listedFor[0]).toBe(
+      `discussion-reply:{"comment_id":${reply.comment.id}}`
+    );
+  });
+
+  it("does not call Knock again for a comment that was already deleted", async () => {
+    const question = ask();
+    const { messages, listedFor } = fakeMessages();
+    deleteComment(db, question.id, base.user.id, false, messages);
+    await vi.waitFor(() => expect(listedFor).toHaveLength(1));
+
+    deleteComment(db, question.id, base.user.id, false, messages);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(listedFor).toHaveLength(1);
+  });
+
+  it("does not wait for Knock", () => {
+    const question = ask();
+    const hanging: KnockMessages = {
+      list: () => new Promise(() => {}),
+      archive: () => new Promise(() => {}),
+    };
+
+    const deleted = deleteComment(db, question.id, base.user.id, false, hanging);
+
+    expect(deleted.deletedAt).not.toBeNull();
+  });
+
+  it("does not fail when Knock does", async () => {
+    const question = ask();
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const failing: KnockMessages = {
+      list: () => Promise.reject(new Error("Knock is down")),
+      archive: () => Promise.reject(new Error("Knock is down")),
+    };
+
+    try {
+      const deleted = deleteComment(db, question.id, base.user.id, false, failing);
+
+      expect(deleted.deletedAt).not.toBeNull();
+      await vi.waitFor(() => expect(error).toHaveBeenCalled());
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  it("does not fail when Knock throws at once", () => {
+    const question = ask();
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const throwing: KnockMessages = {
+      list: () => {
+        throw new Error("not even a promise");
+      },
+      archive: () => Promise.resolve(),
+    };
+
+    try {
+      expect(
+        deleteComment(db, question.id, base.user.id, false, throwing).deletedAt
+      ).not.toBeNull();
+    } finally {
+      error.mockRestore();
+    }
   });
 });

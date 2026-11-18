@@ -51,6 +51,54 @@ function user(db: Queryable, userId: number) {
   return db.select().from(users).where(eq(users.id, userId)).get();
 }
 
+// The lesson and course a comment was posted on.
+function lessonPlace(db: Queryable, lessonId: number) {
+  return db
+    .select({
+      lessonId: lessons.id,
+      lessonTitle: lessons.title,
+      courseId: courses.id,
+      courseTitle: courses.title,
+      courseSlug: courses.slug,
+      instructorId: courses.instructorId,
+    })
+    .from(lessons)
+    .innerJoin(modules, eq(modules.id, lessons.moduleId))
+    .innerJoin(courses, eq(courses.id, modules.courseId))
+    .where(eq(lessons.id, lessonId))
+    .get();
+}
+
+// Subject: the Discussion Question. Recipient: the course's Instructor, whoever
+// asked. The dispatcher drops the actor when the Instructor asked themselves.
+function discussionQuestion(
+  db: Queryable,
+  questionId: number
+): NotificationEvent | null {
+  const question = liveComment(db, questionId);
+  if (!question || question.parentId !== null) return null;
+
+  const place = lessonPlace(db, question.lessonId);
+  if (!place) return null;
+  const actor = user(db, question.userId);
+  const instructor = user(db, place.instructorId);
+  if (!actor || !instructor) return null;
+
+  return {
+    actor,
+    recipients: [instructor],
+    data: {
+      lesson_id: place.lessonId,
+      lesson_title: place.lessonTitle,
+      course_id: place.courseId,
+      course_title: place.courseTitle,
+      comment_id: question.id,
+      snippet: snippet(question.body),
+      target_path: commentPath(place.courseSlug, place.lessonId, question.id),
+    },
+  };
+}
+
 // Subject: the reply. Recipient: the Discussion Question's author only.
 function discussionReply(
   db: Queryable,
@@ -99,4 +147,5 @@ export const notificationBuilders: Record<
   NotificationBuilder
 > = {
   [NotificationType.DiscussionReply]: discussionReply,
+  [NotificationType.DiscussionQuestion]: discussionQuestion,
 };

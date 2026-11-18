@@ -37,4 +37,14 @@ export const WORKFLOWS: WorkflowDefinition[] = [
         "**{{ data.lesson_title }}**: {{ data.snippet }}",
     },
   },
+  {
+    key: NotificationType.DiscussionQuestion,
+    name: "Discussion Question",
+    category: "discussions",
+    feed: {
+      markdownBody:
+        "**{{ actor.name }}** asked a question in " +
+        "**{{ data.lesson_title }}**: {{ data.snippet }}",
+    },
+  },
 ];

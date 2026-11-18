@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import * as schema from "~/db/schema";
 import { comments, lessons } from "~/db/schema";
 import { validateCommentBody } from "~/lib/comments";
+import { removeNotificationsFor, type KnockMessages } from "~/lib/knock.server";
 import {
   NotificationType,
   kickDispatcher,
@@ -74,6 +75,8 @@ export function createComment(
 
     if (comment.parentId !== null) {
       recordNotification(tx, NotificationType.DiscussionReply, comment.id);
+    } else {
+      recordNotification(tx, NotificationType.DiscussionQuestion, comment.id);
     }
 
     return { ok: true, comment };
@@ -82,4 +85,52 @@ export function createComment(
   // The transaction has committed: send without the poster waiting.
   if (result.ok) kickDispatcher();
   return result;
+}
+
+// Soft deletes a comment. The author or staff may delete. Throws an Error
+// with a message for the user when they may not. Afterwards its Notification
+// is archived in Knock, so it leaves the recipient's Notification Feed. That
+// runs in the background and never fails or delays the delete.
+export function deleteComment(
+  db: Db,
+  commentId: number,
+  userId: number,
+  isStaff: boolean,
+  messages: KnockMessages
+): Comment {
+  const existing = db
+    .select()
+    .from(comments)
+    .where(eq(comments.id, commentId))
+    .get();
+  if (!existing) {
+    throw new Error("Comment not found");
+  }
+  if (existing.userId !== userId && !isStaff) {
+    throw new Error("You can only delete your own comments");
+  }
+  if (existing.deletedAt !== null) {
+    return existing;
+  }
+
+  const deleted = db
+    .update(comments)
+    .set({ deletedAt: new Date().toISOString() })
+    .where(eq(comments.id, commentId))
+    .returning()
+    .get();
+
+  const workflowKey =
+    deleted.parentId === null
+      ? NotificationType.DiscussionQuestion
+      : NotificationType.DiscussionReply;
+  void Promise.resolve()
+    .then(() => removeNotificationsFor(messages, workflowKey, deleted.id))
+    .catch((error) =>
+      console.error(
+        `[notifications] could not remove ${workflowKey}:${deleted.id} from Knock`,
+        error
+      )
+    );
+  return deleted;
 }

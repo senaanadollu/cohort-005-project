@@ -46,6 +46,7 @@ export enum TeamMemberRole {
 // first half of every idempotency key.
 export enum NotificationType {
   DiscussionReply = "discussion-reply",
+  DiscussionQuestion = "discussion-question",
 }
 
 // ─── Tables ───
