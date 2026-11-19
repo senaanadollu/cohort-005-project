@@ -12,8 +12,11 @@ export function useHighlightedId(name: string): number | null {
   return parseHighlightId(searchParams, name);
 }
 
-/** Scrolls the element marked `data-highlighted` into view when the id changes. */
-export function useScrollToHighlight(highlightedId: number | null) {
+/**
+ * Scrolls the element marked `data-highlighted` into view when the id (or
+ * section name) changes.
+ */
+export function useScrollToHighlight(highlightedId: number | string | null) {
   useEffect(() => {
     if (highlightedId === null) return;
     document

@@ -12,7 +12,8 @@ import {
 } from "~/lib/notification-preferences";
 
 // The Settings "Notifications" card. The gear in the Notification Feed panel
-// and the footer of Notification emails link here (#notifications). It reads
+// and the footer of Notification emails link here
+// (NOTIFICATION_PREFERENCES_PATH, ?section=notifications). It reads
 // and writes the person's own preferences in Knock from the browser; if Knock
 // can't be reached only this card says so.
 
@@ -23,8 +24,11 @@ type State =
 
 export function NotificationPreferencesCard({
   rows,
+  highlighted = false,
 }: {
   rows: PreferenceRow[];
+  // True when the link that opened Settings points at this card.
+  highlighted?: boolean;
 }) {
   const session = useNotificationFeedSession();
   const [state, setState] = useState<State>({ status: "loading" });
@@ -72,7 +76,11 @@ export function NotificationPreferencesCard({
   }
 
   return (
-    <Card id="notifications" className="mt-8 max-w-md scroll-mt-6">
+    <Card
+      id="notifications"
+      className="mt-8 max-w-md scroll-mt-6"
+      data-highlighted={highlighted || undefined}
+    >
       <CardHeader>
         <h2 className="text-lg font-semibold">Notifications</h2>
         <p className="text-sm text-muted-foreground">

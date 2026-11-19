@@ -1,4 +1,5 @@
 import { NotificationType } from "../../app/db/schema";
+import { NOTIFICATION_PREFERENCES_PATH } from "../../app/lib/highlight";
 
 // ─── What Cadence defines in Knock ───
 // The source of truth for Knock's preference categories and workflows.
@@ -54,10 +55,6 @@ export const EMAIL_SENDER = {
 };
 
 export const EMAIL_LAYOUT_KEY = "cadence";
-
-// Where "Manage Notification preferences" lands: the Notifications card on
-// Settings, the same address as the Notification Feed's gear.
-export const NOTIFICATION_PREFERENCES_PATH = "/settings#notifications";
 
 // Every email step declares, above its message, the variables the layout
 // reads: Knock only exposes the run's data to a layout after {{ content }}, or

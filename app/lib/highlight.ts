@@ -16,3 +16,24 @@ export function parseHighlightId(
   const parsed = highlightIdSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
 }
+
+/**
+ * The section of a page a link points at, from a query parameter such as
+ * `?section=notifications`. Null unless the value is one of `sections`.
+ */
+export function parseHighlightSection<Section extends string>(
+  searchParams: URLSearchParams,
+  name: string,
+  sections: readonly Section[]
+): Section | null {
+  const raw = searchParams.get(name);
+  return sections.find((section) => section === raw) ?? null;
+}
+
+// Where the Notification Feed's gear and the "Manage Notification preferences"
+// link in Notification emails land: the Notifications card on Settings. A query
+// parameter, never a #fragment, so it survives the sign-in redirect. It is a
+// stable address: emails already sent keep linking here.
+export const SETTINGS_SECTION_PARAM = "section";
+export const SETTINGS_SECTIONS = ["notifications"] as const;
+export const NOTIFICATION_PREFERENCES_PATH = `/settings?${SETTINGS_SECTION_PARAM}=notifications`;

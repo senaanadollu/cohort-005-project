@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { z } from "zod";
 import type { Route } from "./+types/settings";
@@ -26,6 +26,11 @@ import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
 import { NotificationPreferencesCard } from "~/components/notification-preferences-card";
 import { preferenceRowsFor } from "~/lib/notification-preferences";
 import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
+import {
+  parseHighlightSection,
+  SETTINGS_SECTION_PARAM,
+  SETTINGS_SECTIONS,
+} from "~/lib/highlight";
 
 const settingsSchema = z.object({
   name: z.string().trim().min(1, "Name cannot be empty."),
@@ -127,7 +132,13 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
     (refundRequest) => refundRequest.status === RefundStatus.Open
   ).length;
   const highlightedId = useHighlightedId("refundRequest");
-  useScrollToHighlight(highlightedId);
+  const [searchParams] = useSearchParams();
+  const highlightedSection = parseHighlightSection(
+    searchParams,
+    SETTINGS_SECTION_PARAM,
+    SETTINGS_SECTIONS
+  );
+  useScrollToHighlight(highlightedId ?? highlightedSection);
   const fetcher = useFetcher();
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -214,7 +225,12 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
         </CardContent>
       </Card>
 
-      <NotificationPreferencesCard rows={preferenceRows} />
+      <NotificationPreferencesCard
+        rows={preferenceRows}
+        highlighted={
+          highlightedId === null && highlightedSection === "notifications"
+        }
+      />
 
       {refundRequests.length > 0 && (
         <Card className="mt-8 max-w-md">

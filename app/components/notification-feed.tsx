@@ -17,6 +17,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { cn, formatRelativeTime } from "~/lib/utils";
+import { NOTIFICATION_PREFERENCES_PATH } from "~/lib/highlight";
 import {
   knockFetch,
   parseFeedResponse,
@@ -286,7 +287,7 @@ export function NotificationBell({
                   </button>
                 ))}
                 <Link
-                  to="/settings#notifications"
+                  to={NOTIFICATION_PREFERENCES_PATH}
                   onClick={() => setOpen(false)}
                   title="Notification preferences"
                   aria-label="Notification preferences"

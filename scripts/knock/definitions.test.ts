@@ -88,7 +88,7 @@ describe("the workflow definitions", () => {
       "{{ data.app_url }}{{ data.target_path }}"
     );
     expect(EMAIL_PRE_CONTENT).toContain(
-      "{{ data.app_url }}/settings#notifications"
+      "{{ data.app_url }}/settings?section=notifications"
     );
   });
 });
