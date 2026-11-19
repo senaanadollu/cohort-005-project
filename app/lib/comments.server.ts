@@ -26,6 +26,14 @@ export type CreateCommentResult =
   | { ok: true; comment: Comment }
   | { ok: false; error: string };
 
+// A top-level comment is a Discussion Question; one with a parent is a
+// Discussion Reply. The Notification type is also its Knock workflow key.
+function discussionNotificationType(comment: Pick<Comment, "parentId">) {
+  return comment.parentId === null
+    ? NotificationType.DiscussionQuestion
+    : NotificationType.DiscussionReply;
+}
+
 export function createComment(
   db: Db,
   userId: number,
@@ -73,11 +81,7 @@ export function createComment(
       .returning()
       .get();
 
-    if (comment.parentId !== null) {
-      recordNotification(tx, NotificationType.DiscussionReply, comment.id);
-    } else {
-      recordNotification(tx, NotificationType.DiscussionQuestion, comment.id);
-    }
+    recordNotification(tx, discussionNotificationType(comment), comment.id);
 
     return { ok: true, comment };
   });
@@ -120,10 +124,7 @@ export function deleteComment(
     .returning()
     .get();
 
-  const workflowKey =
-    deleted.parentId === null
-      ? NotificationType.DiscussionQuestion
-      : NotificationType.DiscussionReply;
+  const workflowKey = discussionNotificationType(deleted);
   void Promise.resolve()
     .then(() => removeNotificationsFor(messages, workflowKey, deleted.id))
     .catch((error) =>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isInAppPath } from "./redirect";
+import { isInAppPath, signInDestination } from "./redirect";
 
 describe("isInAppPath", () => {
   it("accepts plain in-app paths, with their query strings", () => {
@@ -24,5 +24,19 @@ describe("isInAppPath", () => {
     expect(isInAppPath(undefined)).toBe(false);
     expect(isInAppPath("")).toBe(false);
     expect(isInAppPath("courses")).toBe(false);
+  });
+});
+
+describe("signInDestination", () => {
+  it("lands on the redirectTo target when it is a plain in-app path", () => {
+    expect(signInDestination("/settings?section=notifications")).toBe(
+      "/settings?section=notifications"
+    );
+  });
+
+  it("falls back to the course list for a missing or unsafe target", () => {
+    expect(signInDestination(null)).toBe("/courses");
+    expect(signInDestination(undefined)).toBe("/courses");
+    expect(signInDestination("//other-site.com")).toBe("/courses");
   });
 });

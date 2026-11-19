@@ -1,3 +1,4 @@
+import type { NotificationType } from "~/db/schema";
 import type { FeedItem } from "~/lib/knock-feed";
 import { isInAppPath } from "~/lib/redirect";
 import { formatPrice } from "~/lib/utils";
@@ -75,8 +76,13 @@ type Wording = {
 const lesson = (data: Data) => named(text(data, "lesson_title"), "a lesson");
 const course = (data: Data) => named(text(data, "course_title"), "a course");
 
+// A workflow key is the NotificationType's value. A type-only import keeps
+// the database schema out of the browser bundle, and the compiler demands
+// exactly one wording per NotificationType.
+type WorkflowKey = `${NotificationType}`;
+
 // One entry per workflow key Cadence sends.
-const wordings: Record<string, Wording> = {
+const wordingsByKey: Record<WorkflowKey, Wording> = {
   "discussion-reply": {
     category: "Discussions",
     headline: (actor, data) => [
@@ -137,6 +143,9 @@ const wordings: Record<string, Wording> = {
     headline: (actor, data) => [actor, plain(" enrolled in "), course(data)],
   },
 };
+
+// Feed items carry whatever key Knock holds; an unknown one has no wording.
+const wordings: Partial<Record<string, Wording>> = wordingsByKey;
 
 // Null for a workflow key Cadence doesn't send (for example one left in Knock
 // by a prototype): the panel leaves it out.
