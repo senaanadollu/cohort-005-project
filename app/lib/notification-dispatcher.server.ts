@@ -1,5 +1,4 @@
 import { and, asc, eq, isNull, lte, or } from "drizzle-orm";
-import { z } from "zod";
 import { pendingNotifications } from "~/db/schema";
 import {
   knockUser,
@@ -89,18 +88,6 @@ function retryLater(db: Db, row: Row, reason: string) {
   );
 }
 
-const savedUser = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  avatar: z.string().optional(),
-});
-const savedTrigger: z.ZodType<WorkflowTrigger> = z.object({
-  actor: savedUser,
-  recipients: z.array(savedUser),
-  data: z.record(z.string(), z.unknown()),
-});
-
 // appUrl, when given, travels as `app_url`: the email templates prefix it to
 // `target_path` for the button, so the feed keeps a path and the email gets a
 // full address.
@@ -118,10 +105,17 @@ function buildTrigger(
   };
 }
 
-// Reads the current data on every attempt, so a subject deleted since the
-// last attempt closes the row. The body sent is the one saved before the
-// first attempt: Knock rejects a reused idempotency key whose body differs,
-// which would otherwise turn a renamed person into a failed row.
+// Reads the current data on every attempt and rebuilds the trigger from it
+// (ADR 0013: a row holds only the type, the subject id and the idempotency
+// key), so a subject deleted since the last attempt closes the row and a retry
+// carries current names, emails and app_url. The idempotency key stays the
+// same on every attempt.
+//
+// Accepted consequence: Knock only remembers a key for a 2xx. If it accepted
+// an earlier attempt whose response was lost, and the data changed since, it
+// rejects the reused key with a 4xx and the row is marked failed. The person
+// was already notified by the accepted attempt, so nothing is sent twice and
+// no Notification is lost.
 async function dispatchRow(
   db: Db,
   sender: KnockSender,
@@ -130,8 +124,8 @@ async function dispatchRow(
   appUrl: string | undefined
 ) {
   const event = notificationBuilders[pending.type](db, pending.subjectId);
-  const current = event ? buildTrigger(event, appUrl) : undefined;
-  if (!current) {
+  const trigger = event ? buildTrigger(event, appUrl) : undefined;
+  if (!trigger) {
     close(db, pending);
     return;
   }
@@ -146,21 +140,16 @@ async function dispatchRow(
     return;
   }
 
-  const trigger = pending.trigger
-    ? savedTrigger.parse(JSON.parse(pending.trigger))
-    : current;
   const row: Row = {
     ...pending,
     attempts: pending.attempts + 1,
     firstAttemptAt: pending.firstAttemptAt ?? new Date().toISOString(),
-    trigger: pending.trigger ?? JSON.stringify(trigger),
   };
-  // Saved before sending, so an attempt cut off by a crash still counts and
-  // the retry sends the same body.
+  // Saved before sending, so an attempt cut off by a crash still counts
+  // towards the retry budget and the 20-hour window.
   update(db, pending, {
     attempts: row.attempts,
     firstAttemptAt: row.firstAttemptAt,
-    trigger: row.trigger,
   });
 
   let response: KnockResponse;

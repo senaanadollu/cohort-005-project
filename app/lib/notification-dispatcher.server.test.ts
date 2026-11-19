@@ -517,7 +517,7 @@ describe("retrying a failed send", () => {
     errors.mockRestore();
   });
 
-  it("retries with the same idempotency key and the same body, even when a name changed in between", async () => {
+  it("retries with the same idempotency key, rebuilding the trigger from the current data", async () => {
     const reply = replyPending();
     const { sender, sent } = scriptedSender(down, ok);
 
@@ -532,8 +532,36 @@ describe("retrying a failed send", () => {
     expect(sent).toHaveLength(2);
     expect(sent[1].idempotencyKey).toBe(`discussion-reply:${reply.id}`);
     expect(sent[1].idempotencyKey).toBe(sent[0].idempotencyKey);
-    expect(sent[1].trigger).toEqual(sent[0].trigger);
-    expect(sent[1].trigger.actor.name).toBe("Test Instructor");
+    expect(sent[0].trigger.actor.name).toBe("Test Instructor");
+    expect(sent[1].trigger.actor.name).toBe("Renamed Instructor");
+    expect(rows().slice(-1)[0].sentAt).not.toBeNull();
+  });
+
+  it("marks the row failed, without sending again, when Knock took an attempt whose answer was lost and rejects the reused key after the data changed", async () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    replyPending();
+    // Knock accepted the first attempt, but the response never arrived.
+    const { sender, sent } = scriptedSender(
+      new Error("socket hang up"),
+      { status: 422, body: { code: "idempotency_key_reused" } },
+      ok
+    );
+
+    await dispatchPendingNotifications(db, sender, log);
+    db.update(schema.users)
+      .set({ name: "Renamed Instructor" })
+      .where(eq(schema.users.id, base.instructor.id))
+      .run();
+    for (const ms of [1 * HOUR, 2 * HOUR, 3 * HOUR]) {
+      at(ms);
+      await dispatchPendingNotifications(db, sender, log);
+    }
+
+    expect(sent).toHaveLength(2);
+    const row = rows().slice(-1)[0];
+    expect(row.failedAt).not.toBeNull();
+    expect(row.sentAt).toBeNull();
+    errors.mockRestore();
   });
 
   it("closes the row without a retry when the reply was deleted after a failed attempt", async () => {
@@ -609,7 +637,7 @@ describe("the site address the email button prefixes", () => {
     });
   });
 
-  it("resends the first attempt's app_url on a retry", async () => {
+  it("supplies the app_url of the send that is making the attempt", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     try {
       at(0);
@@ -631,7 +659,8 @@ describe("the site address the email button prefixes", () => {
       );
 
       expect(sent).toHaveLength(2);
-      expect(sent[1].trigger.data.app_url).toBe("https://first.example");
+      expect(sent[0].trigger.data.app_url).toBe("https://first.example");
+      expect(sent[1].trigger.data.app_url).toBe("https://second.example");
     } finally {
       vi.useRealTimers();
     }

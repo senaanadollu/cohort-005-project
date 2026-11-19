@@ -396,10 +396,6 @@ export const pendingNotifications = sqliteTable("pending_notifications", {
   firstAttemptAt: text("first_attempt_at"),
   // Null means due now. Set after a failure that will be retried.
   nextAttemptAt: text("next_attempt_at"),
-  // The trigger body (actor, recipients, data) as JSON, saved before the first
-  // attempt and resent unchanged on every retry, because Knock rejects a
-  // reused idempotency key whose body differs.
-  trigger: text("trigger"),
   // Set when the dispatcher gives up: a non-429 4xx, or no success inside the
   // retry budget. A failed row is kept and never sent again.
   failedAt: text("failed_at"),
