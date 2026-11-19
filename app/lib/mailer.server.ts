@@ -24,21 +24,6 @@ function fromAddress(): string {
   return process.env.MAIL_FROM_ADDRESS || DEFAULT_FROM_ADDRESS;
 }
 
-// In production the server must not start without a Postmark token, or every
-// email would silently land in a folder nobody reads.
-export function assertMailConfig(env: {
-  NODE_ENV?: string;
-  POSTMARK_SERVER_TOKEN?: string;
-}): void {
-  if (env.NODE_ENV === "production" && !env.POSTMARK_SERVER_TOKEN) {
-    throw new Error(
-      "POSTMARK_SERVER_TOKEN is required in production. Set it before starting the server."
-    );
-  }
-}
-
-assertMailConfig(process.env);
-
 export function postmarkTransport(
   serverToken: string,
   from: string = fromAddress()

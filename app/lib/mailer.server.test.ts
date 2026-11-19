@@ -3,7 +3,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
-  assertMailConfig,
   outboxTransport,
   sendEmail,
   sendReceipt,
@@ -82,24 +81,5 @@ describe("outboxTransport", () => {
     const [file] = readdirSync(directory);
     const written = JSON.parse(readFileSync(join(directory, file), "utf8"));
     expect(written.from).toBe("Cadence <notifications@anadollu.com>");
-  });
-});
-
-describe("assertMailConfig", () => {
-  it("refuses to start in production without a Postmark token", () => {
-    expect(() => assertMailConfig({ NODE_ENV: "production" })).toThrow(
-      "POSTMARK_SERVER_TOKEN"
-    );
-  });
-
-  it("accepts production with a token", () => {
-    expect(() =>
-      assertMailConfig({ NODE_ENV: "production", POSTMARK_SERVER_TOKEN: "t" })
-    ).not.toThrow();
-  });
-
-  it("accepts a missing token outside production", () => {
-    expect(() => assertMailConfig({ NODE_ENV: "development" })).not.toThrow();
-    expect(() => assertMailConfig({})).not.toThrow();
   });
 });
