@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { z } from "zod";
 import type { Route } from "./+types/settings";
@@ -10,22 +10,22 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import {
-  UserRole,
-  RefundStatus,
-  TeamMemberRole,
-  users,
-  teamMembers,
-} from "~/db/schema";
+import { UserRole, RefundStatus, users } from "~/db/schema";
 import { AlertTriangle } from "lucide-react";
 import { data, isRouteErrorResponse, Link } from "react-router";
 import { db } from "~/db";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { isTeamAdmin } from "~/lib/teams.server";
 import { formatPrice } from "~/lib/utils";
 import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
 import { NotificationPreferencesCard } from "~/components/notification-preferences-card";
 import { preferenceRowsFor } from "~/lib/notification-preferences";
 import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
+import {
+  parseHighlightSection,
+  SETTINGS_SECTION_PARAM,
+  SETTINGS_SECTIONS,
+} from "~/lib/highlight";
 
 const settingsSchema = z.object({
   name: z.string().trim().min(1, "Name cannot be empty."),
@@ -59,19 +59,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const refundRequests = listRefundRequestsForBuyer(db, currentUserId);
-  const isTeamAdmin = !!db
-    .select({ id: teamMembers.id })
-    .from(teamMembers)
-    .where(
-      and(
-        eq(teamMembers.userId, currentUserId),
-        eq(teamMembers.role, TeamMemberRole.Admin)
-      )
-    )
-    .get();
   const preferenceRows = preferenceRowsFor({
     role: currentUser.role,
-    isTeamAdmin,
+    isTeamAdmin: isTeamAdmin(db, currentUserId),
   });
 
   return {
@@ -127,7 +117,13 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
     (refundRequest) => refundRequest.status === RefundStatus.Open
   ).length;
   const highlightedId = useHighlightedId("refundRequest");
-  useScrollToHighlight(highlightedId);
+  const [searchParams] = useSearchParams();
+  const highlightedSection = parseHighlightSection(
+    searchParams,
+    SETTINGS_SECTION_PARAM,
+    SETTINGS_SECTIONS
+  );
+  useScrollToHighlight(highlightedId ?? highlightedSection);
   const fetcher = useFetcher();
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -214,7 +210,12 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
         </CardContent>
       </Card>
 
-      <NotificationPreferencesCard rows={preferenceRows} />
+      <NotificationPreferencesCard
+        rows={preferenceRows}
+        highlighted={
+          highlightedId === null && highlightedSection === "notifications"
+        }
+      />
 
       {refundRequests.length > 0 && (
         <Card className="mt-8 max-w-md">

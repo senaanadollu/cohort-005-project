@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Route } from "./+types/login";
 import { setCurrentUserId, getCurrentUserId } from "~/lib/session";
 import { parseFormData } from "~/lib/validation";
-import { isInAppPath } from "~/lib/redirect";
+import { signInDestination } from "~/lib/redirect";
 import { getDevUIData } from "~/lib/dev-ui.server";
 import { DevUI } from "~/components/dev-ui";
 import { Button } from "~/components/ui/button";
@@ -34,7 +34,7 @@ export async function loader({ request, url }: Route.LoaderArgs) {
   const currentUserId = await getCurrentUserId(request);
   if (currentUserId) {
     const redirectTo = url.searchParams.get("redirectTo");
-    const destination = isInAppPath(redirectTo) ? redirectTo : "/courses";
+    const destination = signInDestination(redirectTo);
     throw redirect(destination);
   }
   return { devUI: await getDevUIData(request) };
@@ -65,7 +65,7 @@ export async function action({ request, url }: Route.ActionArgs) {
   }
 
   const redirectTo = url.searchParams.get("redirectTo");
-  const destination = isInAppPath(redirectTo) ? redirectTo : "/courses";
+  const destination = signInDestination(redirectTo);
 
   const cookie = await setCurrentUserId(request, user.id);
   throw redirect(destination, {
@@ -155,7 +155,7 @@ export default function Login({ loaderData }: Route.ComponentProps) {
           devCountry={devUI.devCountry}
           countryTierInfo={devUI.countryTierInfo}
           countries={devUI.countries}
-          switchUserRedirectTo={isInAppPath(redirectTo) ? redirectTo : "/courses"}
+          switchUserRedirectTo={signInDestination(redirectTo)}
         />
       )}
     </div>

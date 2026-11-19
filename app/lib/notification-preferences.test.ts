@@ -50,6 +50,34 @@ describe("preferenceRowsFor", () => {
       "discussions/email: Replies to your questions",
     ]);
   });
+
+  it("an Instructor who is a Team Admin also sees the buyer's Refunds row and the Team row", () => {
+    expect(summary(UserRole.Instructor, true)).toEqual([
+      "refunds/email: When your Refund Request is approved or declined",
+      "discussions/email: Questions on your courses, and replies to your questions",
+      "team/in_app_feed: When someone claims a Seat",
+      "enrollments/in_app_feed: When a Student enrols in your course",
+    ]);
+  });
+
+  it("a Platform Admin who is a Team Admin sees one Refunds row covering both, and the Team row", () => {
+    expect(summary(UserRole.Admin, true)).toEqual([
+      "refunds/email: When someone opens a Refund Request, and when your Refund Request is approved or declined",
+      "discussions/email: Replies to your questions",
+      "team/in_app_feed: When someone claims a Seat",
+    ]);
+  });
+
+  it("never shows two rows for the same category and Channel", () => {
+    for (const role of Object.values(UserRole)) {
+      for (const isTeamAdmin of [false, true]) {
+        const keys = preferenceRowsFor({ role, isTeamAdmin }).map(
+          (r) => `${r.category}/${r.channel}`
+        );
+        expect(new Set(keys).size).toBe(keys.length);
+      }
+    }
+  });
 });
 
 describe("resolveToggles", () => {

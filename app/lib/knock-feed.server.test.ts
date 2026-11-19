@@ -1,6 +1,11 @@
 import { generateKeyPairSync, verify } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { notificationFeedSession, signUserToken } from "./knock-feed.server";
+import {
+  createIdentifyCache,
+  notificationFeedSession,
+  signUserToken,
+  IDENTIFY_CACHE_MS,
+} from "./knock-feed.server";
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", {
   modulusLength: 2048,
@@ -62,6 +67,7 @@ describe("notificationFeedSession", () => {
 
   it("gives the browser a token signed for the user, the public key and the feed channel", async () => {
     const session = await notificationFeedSession(ada, env, {
+      identified: createIdentifyCache(),
       identifier: okIdentifier,
       log: quietLog,
     });
@@ -79,6 +85,7 @@ describe("notificationFeedSession", () => {
 
   it("never hands the browser the secret API key or the signing key", async () => {
     const session = await notificationFeedSession(ada, env, {
+      identified: createIdentifyCache(),
       identifier: okIdentifier,
       log: quietLog,
     });
@@ -90,6 +97,7 @@ describe("notificationFeedSession", () => {
   it("identifies the user to Knock with their current details", async () => {
     const identified: unknown[] = [];
     await notificationFeedSession(ada, env, {
+      identified: createIdentifyCache(),
       identifier: {
         identify: async (user) => {
           identified.push(user);
@@ -112,6 +120,7 @@ describe("notificationFeedSession", () => {
   it("still issues the token when Knock is unreachable", async () => {
     const lines: string[] = [];
     const session = await notificationFeedSession(ada, env, {
+      identified: createIdentifyCache(),
       identifier: {
         identify: () => Promise.reject(new Error("ECONNREFUSED")),
       },
@@ -125,6 +134,7 @@ describe("notificationFeedSession", () => {
 
   it("does not wait for Knock to answer before issuing the token", async () => {
     const session = await notificationFeedSession(ada, env, {
+      identified: createIdentifyCache(),
       identifier: { identify: () => new Promise(() => {}) },
       log: quietLog,
     });
@@ -137,7 +147,8 @@ describe("notificationFeedSession", () => {
     const session = await notificationFeedSession(
       ada,
       { ...env, KNOCK_SIGNING_KEY: "not-a-key" },
-      { identifier: okIdentifier, log: (line) => lines.push(line) }
+      { identified: createIdentifyCache(),
+      identifier: okIdentifier, log: (line) => lines.push(line) }
     );
 
     expect(session).toBeNull();
@@ -162,5 +173,139 @@ describe("notificationFeedSession", () => {
 
     expect(session).toBeNull();
     expect(identifyCalls).toBe(0);
+  });
+
+  describe("identifying again on the next page load", () => {
+    const t0 = new Date("2026-11-18T12:00:00Z");
+    const later = (ms: number) => new Date(t0.getTime() + ms);
+
+    function countingIdentifier(status = 200) {
+      const identified: unknown[] = [];
+      return {
+        identified,
+        identifier: {
+          identify: async (user: unknown) => {
+            identified.push(user);
+            return { status, body: {} };
+          },
+        },
+      };
+    }
+
+    // Lets the identify call started in the background settle.
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it("skips Knock for the same user with unchanged details identified recently, but still signs a fresh token", async () => {
+      const cache = createIdentifyCache();
+      const { identified, identifier } = countingIdentifier();
+      const load = (now: Date) =>
+        notificationFeedSession(ada, env, {
+          identified: cache,
+          identifier,
+          log: quietLog,
+          now,
+        });
+
+      const first = await load(t0);
+      await settle();
+      const second = await load(later(60_000));
+      await settle();
+
+      expect(identified).toHaveLength(1);
+      expect(second?.userToken).not.toBe(first?.userToken);
+      expect(second && decode(second.userToken).signatureValid).toBe(true);
+    });
+
+    it("identifies again when the name, email or avatar changed", async () => {
+      const cache = createIdentifyCache();
+      const { identified, identifier } = countingIdentifier();
+      const load = (user: Parameters<typeof notificationFeedSession>[0]) =>
+        notificationFeedSession(user, env, {
+          identified: cache,
+          identifier,
+          log: quietLog,
+          now: t0,
+        });
+
+      await load(ada);
+      await settle();
+      await load({ ...ada, name: "Ada Lovelace" });
+      await settle();
+      await load({ ...ada, name: "Ada Lovelace", email: "ada@new.example" });
+      await settle();
+      await load({
+        ...ada,
+        name: "Ada Lovelace",
+        email: "ada@new.example",
+        avatarUrl: null,
+      });
+      await settle();
+
+      expect(identified).toHaveLength(4);
+    });
+
+    it("identifies again once the time limit has passed", async () => {
+      const cache = createIdentifyCache();
+      const { identified, identifier } = countingIdentifier();
+      const load = (now: Date) =>
+        notificationFeedSession(ada, env, {
+          identified: cache,
+          identifier,
+          log: quietLog,
+          now,
+        });
+
+      await load(t0);
+      await settle();
+      await load(later(IDENTIFY_CACHE_MS + 1));
+      await settle();
+
+      expect(identified).toHaveLength(2);
+    });
+
+    it("tries again on the next load when Knock refused or could not be reached", async () => {
+      const cache = createIdentifyCache();
+      const refused = countingIdentifier(500);
+      const options = {
+        identified: cache,
+        log: quietLog,
+        now: t0,
+      };
+
+      await notificationFeedSession(ada, env, {
+        ...options,
+        identifier: refused.identifier,
+      });
+      await settle();
+      await notificationFeedSession(ada, env, {
+        ...options,
+        identifier: { identify: () => Promise.reject(new Error("ECONNRESET")) },
+      });
+      await settle();
+      const session = await notificationFeedSession(ada, env, {
+        ...options,
+        identifier: refused.identifier,
+      });
+      await settle();
+
+      expect(refused.identified).toHaveLength(2);
+      expect(session?.knockUserId).toBe("42");
+    });
+
+    it("identifies each user on their own", async () => {
+      const cache = createIdentifyCache();
+      const { identified, identifier } = countingIdentifier();
+      for (const user of [ada, { ...ada, id: 43 }]) {
+        await notificationFeedSession(user, env, {
+          identified: cache,
+          identifier,
+          log: quietLog,
+          now: t0,
+        });
+        await settle();
+      }
+
+      expect(identified).toHaveLength(2);
+    });
   });
 });

@@ -1,6 +1,38 @@
 import { describe, it, expect } from "vitest";
 import { NotificationType } from "../../app/db/schema";
-import { EMAIL_LAYOUT, EMAIL_PRE_CONTENT, WORKFLOWS } from "./definitions";
+import {
+  EMAIL_LAYOUT,
+  EMAIL_PRE_CONTENT,
+  WORKFLOWS,
+  emailSenderFrom,
+} from "./definitions";
+
+describe("emailSenderFrom", () => {
+  it("defaults to Cadence <notifications@anadollu.com>", () => {
+    expect(emailSenderFrom(undefined)).toEqual({
+      from_name: "Cadence",
+      from_address: "notifications@anadollu.com",
+    });
+    expect(emailSenderFrom("  ")).toEqual({
+      from_name: "Cadence",
+      from_address: "notifications@anadollu.com",
+    });
+  });
+
+  it("reads MAIL_FROM_ADDRESS in the Receipts' Name <address> form", () => {
+    expect(emailSenderFrom("Cadence Staging <notify@staging.example.com>")).toEqual({
+      from_name: "Cadence Staging",
+      from_address: "notify@staging.example.com",
+    });
+  });
+
+  it("names a bare address Cadence", () => {
+    expect(emailSenderFrom("notify@staging.example.com")).toEqual({
+      from_name: "Cadence",
+      from_address: "notify@staging.example.com",
+    });
+  });
+});
 
 describe("the workflow definitions", () => {
   it("define a workflow for every NotificationType, once each", () => {
@@ -88,7 +120,7 @@ describe("the workflow definitions", () => {
       "{{ data.app_url }}{{ data.target_path }}"
     );
     expect(EMAIL_PRE_CONTENT).toContain(
-      "{{ data.app_url }}/settings#notifications"
+      "{{ data.app_url }}/settings?section=notifications"
     );
   });
 });

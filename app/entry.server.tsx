@@ -10,17 +10,19 @@ import { db } from "~/db";
 import { appUrlFromEnv, senderFromEnv } from "~/lib/knock.server";
 import { checkEmailSandbox } from "~/lib/knock-sandbox.server";
 import { startNotificationDispatcher } from "~/lib/notification-dispatcher.server";
+import { assertProductionConfig } from "~/lib/production-config.server";
 
 // ─── Server startup ───
 // The only place the Notification dispatcher and its 30-second retry sweep are
-// started, so importing a service never starts them. senderFromEnv and
-// appUrlFromEnv throw in production when the Knock key or APP_URL is missing,
-// which stops the server from starting. In development this module is
+// started, so importing a service never starts them. assertProductionConfig
+// throws in production when a Knock key, APP_URL or POSTMARK_SERVER_TOKEN is
+// missing, which stops the server from starting. In development this module is
 // re-evaluated on edits, so the previous dispatcher is stopped first.
 const startup = globalThis as typeof globalThis & {
   __stopNotificationDispatcher?: () => void;
   __emailSandboxChecked?: boolean;
 };
+assertProductionConfig(process.env);
 const sender = senderFromEnv(process.env);
 const appUrl = appUrlFromEnv(process.env);
 startup.__stopNotificationDispatcher?.();

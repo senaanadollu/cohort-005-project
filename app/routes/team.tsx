@@ -10,39 +10,21 @@ import { Users, BookOpen, Copy, Check, AlertTriangle } from "lucide-react";
 import { data, isRouteErrorResponse } from "react-router";
 import { db } from "~/db";
 import {
-  teams,
-  teamMembers,
   coupons,
   courses,
   users,
-  TeamMemberRole,
   RefundStatus,
 } from "~/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { getTeamForAdmin } from "~/lib/teams.server";
 import {
   getSeatAvailability,
   listTeamLicences,
   type SeatAvailability,
 } from "~/lib/refunds.server";
 import { formatPrice } from "~/lib/utils";
+import { filterForLink } from "~/lib/highlight";
 import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
-
-function getTeamForAdmin(userId: number) {
-  const membership = db
-    .select()
-    .from(teamMembers)
-    .where(
-      and(
-        eq(teamMembers.userId, userId),
-        eq(teamMembers.role, TeamMemberRole.Admin)
-      )
-    )
-    .get();
-
-  if (!membership) return undefined;
-
-  return db.select().from(teams).where(eq(teams.id, membership.teamId)).get();
-}
 
 function getCouponsForTeam(teamId: number) {
   return db.select().from(coupons).where(eq(coupons.teamId, teamId)).all();
@@ -88,7 +70,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw data("Select a user from the DevUI panel.", { status: 401 });
   }
 
-  const team = getTeamForAdmin(currentUserId);
+  const team = getTeamForAdmin(db, currentUserId);
 
   if (!team) {
     throw data("You don't have a team. Purchase team seats to create one.", {
@@ -199,13 +181,14 @@ function CopyButton({ code }: { code: string }) {
 
 export default function Team({ loaderData }: Route.ComponentProps) {
   const { courseStats, couponRows, teamLicences } = loaderData;
-  const [courseFilter, setCourseFilter] = useState<number | "all">("all");
   const highlightedSeatId = useHighlightedId("seat");
-
-  // A link to a Seat must find its row, so it clears any course filter.
-  useEffect(() => {
-    if (highlightedSeatId !== null) setCourseFilter("all");
-  }, [highlightedSeatId]);
+  // A link to a Seat must find its row, so it clears any course filter in the
+  // same render that highlights the row, before the scroll runs.
+  const [chosenFilter, setChosenFilter] = useState<{
+    value: number | "all";
+    linkedId: number | null;
+  }>({ value: "all", linkedId: highlightedSeatId });
+  const courseFilter = filterForLink(chosenFilter, highlightedSeatId, "all");
   useScrollToHighlight(highlightedSeatId);
 
   const filteredCoupons =
@@ -286,9 +269,11 @@ export default function Team({ loaderData }: Route.ComponentProps) {
             <select
               value={courseFilter}
               onChange={(e) =>
-                setCourseFilter(
-                  e.target.value === "all" ? "all" : Number(e.target.value)
-                )
+                setChosenFilter({
+                  value:
+                    e.target.value === "all" ? "all" : Number(e.target.value),
+                  linkedId: highlightedSeatId,
+                })
               }
               className="rounded-md border border-input bg-background px-3 py-1.5 text-sm"
             >

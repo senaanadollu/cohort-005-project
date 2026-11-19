@@ -42,6 +42,53 @@ export function knockIdentifier(apiKey: string): KnockIdentifier {
 
 type Env = Record<string, string | undefined>;
 
+// ─── Not identifying on every page load ───
+// The app layout signs a token on every load. Identifying each time would call
+// Knock on every navigation, so a person is identified again only when their
+// name, email or avatar changed, or IDENTIFY_CACHE_MS has passed. Only a
+// successful identify is remembered: a refusal or an outage is retried on the
+// next load. Per process and in memory; a restart just identifies once more.
+export const IDENTIFY_CACHE_MS = 10 * 60 * 1000;
+const IDENTIFY_CACHE_MAX_USERS = 1000;
+
+export type IdentifyCache = {
+  isFresh(user: KnockUser, now: Date): boolean;
+  remember(user: KnockUser, now: Date): void;
+  forget(user: KnockUser): void;
+};
+
+function fingerprint(user: KnockUser) {
+  return JSON.stringify([user.name, user.email, user.avatar ?? null]);
+}
+
+export function createIdentifyCache(): IdentifyCache {
+  const entries = new Map<string, { fingerprint: string; at: number }>();
+  return {
+    isFresh(user, now) {
+      const entry = entries.get(user.id);
+      return (
+        entry !== undefined &&
+        entry.fingerprint === fingerprint(user) &&
+        now.getTime() - entry.at < IDENTIFY_CACHE_MS
+      );
+    },
+    remember(user, now) {
+      entries.delete(user.id);
+      // A Map keeps insertion order, so the first key is the oldest.
+      if (entries.size >= IDENTIFY_CACHE_MAX_USERS) {
+        const oldest = entries.keys().next().value;
+        if (oldest !== undefined) entries.delete(oldest);
+      }
+      entries.set(user.id, { fingerprint: fingerprint(user), at: now.getTime() });
+    },
+    forget(user) {
+      entries.delete(user.id);
+    },
+  };
+}
+
+const identifiedInThisProcess = createIdentifyCache();
+
 type SessionUser = {
   id: number;
   name: string;
@@ -54,12 +101,14 @@ type SessionUser = {
 // keys are missing (fresh clone, CI): the bell then shows an empty feed.
 //
 // Identifying is started but not awaited, so a slow or unreachable Knock
-// never delays the page or stops the token being issued.
+// never delays the page or stops the token being issued. It is skipped when
+// this person was identified recently with the same details (IdentifyCache).
 export async function notificationFeedSession(
   user: SessionUser,
   env: Env = process.env,
   options: {
     identifier?: KnockIdentifier;
+    identified?: IdentifyCache;
     log?: (line: string) => void;
     now?: Date;
   } = {}
@@ -86,11 +135,16 @@ export async function notificationFeedSession(
     return null;
   }
 
-  if (identifier) {
+  const identified = options.identified ?? identifiedInThisProcess;
+  const now = options.now ?? new Date();
+  if (identifier && !identified.isFresh(recipient, now)) {
     identifier
       .identify(recipient)
       .then((response) => {
-        if (response.status >= 300) {
+        if (response.status < 300) {
+          identified.remember(recipient, now);
+        } else {
+          identified.forget(recipient);
           log(
             `[notifications] identify ${recipient.id} failed: ` +
               `${response.status} ${String(response.body)}`
@@ -98,6 +152,7 @@ export async function notificationFeedSession(
         }
       })
       .catch((error: unknown) => {
+        identified.forget(recipient);
         log(
           `[notifications] identify ${recipient.id} failed: ${String(error)}`
         );

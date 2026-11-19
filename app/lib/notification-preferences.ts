@@ -59,22 +59,35 @@ const enrollmentsRow: PreferenceRow = {
   description: "When a Student enrols in your course",
 };
 
-// The rows a person's role can receive. Cadence decides this, not Knock.
+// A Platform Admin who also bought a Team Licence hears about both kinds of
+// Refund Request through the one Refunds email toggle.
+const refundsForPlatformAdminBuyer: PreferenceRow = {
+  ...refundsForPlatformAdmin,
+  description:
+    "When someone opens a Refund Request, and when your Refund Request is approved or declined",
+};
+
+// The rows a person can receive. Cadence decides this, not Knock. A Team
+// Admin, whatever their role, is the buyer of their Team Licence: refund
+// decisions and Claimed Seats reach them, so they see the buyer's Refunds row
+// and the Team row. One row per category and Channel, since each is one toggle.
 export function preferenceRowsFor(person: {
   role: UserRole;
   isTeamAdmin: boolean;
 }): PreferenceRow[] {
+  const team = person.isTeamAdmin ? [teamRow] : [];
+  const buyerRefunds = person.isTeamAdmin ? [refundsForBuyers] : [];
   switch (person.role) {
     case UserRole.Admin:
-      return [refundsForPlatformAdmin, discussionsForOthers];
-    case UserRole.Instructor:
-      return [discussionsForInstructor, enrollmentsRow];
-    case UserRole.Student:
       return [
-        refundsForBuyers,
+        person.isTeamAdmin ? refundsForPlatformAdminBuyer : refundsForPlatformAdmin,
         discussionsForOthers,
-        ...(person.isTeamAdmin ? [teamRow] : []),
+        ...team,
       ];
+    case UserRole.Instructor:
+      return [...buyerRefunds, discussionsForInstructor, ...team, enrollmentsRow];
+    case UserRole.Student:
+      return [refundsForBuyers, discussionsForOthers, ...team];
   }
 }
 
