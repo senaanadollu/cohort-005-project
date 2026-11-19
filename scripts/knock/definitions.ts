@@ -47,12 +47,29 @@ export type WorkflowDefinition = {
 };
 
 // ─── Notification emails ───
-// Sent as Cadence <notifications@anadollu.com>, straight away, one per
-// Notification, with open and link tracking off. Replies are not read.
-export const EMAIL_SENDER = {
-  from_name: "Cadence",
-  from_address: "notifications@anadollu.com",
-};
+// Sent straight away, one per Notification, with open and link tracking off.
+// Replies are not read. The sender is per-environment configuration: the push
+// reads MAIL_FROM_ADDRESS, the variable Receipts use, in the same
+// "Name <address>" form, and defaults to Cadence <notifications@anadollu.com>.
+export type EmailSender = { from_name: string; from_address: string };
+
+const DEFAULT_SENDER_NAME = "Cadence";
+const DEFAULT_SENDER_ADDRESS = "notifications@anadollu.com";
+
+export function emailSenderFrom(mailFromAddress: string | undefined): EmailSender {
+  const value = mailFromAddress?.trim();
+  if (!value) {
+    return { from_name: DEFAULT_SENDER_NAME, from_address: DEFAULT_SENDER_ADDRESS };
+  }
+  const named = /^(.*?)\s*<([^<>\s]+)>$/.exec(value);
+  if (named) {
+    return {
+      from_name: named[1].trim() || DEFAULT_SENDER_NAME,
+      from_address: named[2],
+    };
+  }
+  return { from_name: DEFAULT_SENDER_NAME, from_address: value };
+}
 
 export const EMAIL_LAYOUT_KEY = "cadence";
 

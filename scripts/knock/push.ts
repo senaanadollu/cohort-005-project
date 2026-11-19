@@ -4,7 +4,8 @@ import {
   EMAIL_LAYOUT,
   EMAIL_LAYOUT_KEY,
   EMAIL_PRE_CONTENT,
-  EMAIL_SENDER,
+  emailSenderFrom,
+  type EmailSender,
   PREFERENCE_CATEGORIES,
   type WorkflowDefinition,
 } from "./definitions";
@@ -63,10 +64,11 @@ async function channelKey(
 }
 
 type ChannelKeys = { feed: string; email: string };
+type StepConfig = { channelKeys: ChannelKeys; sender: EmailSender };
 
 // The email step on the Postmark channel. Its pre-content declares what the
 // shared layout reads: the greeting's first name, the button and the footer.
-function emailSteps(workflow: WorkflowDefinition, emailChannelKey: string) {
+function emailSteps(workflow: WorkflowDefinition, config: StepConfig) {
   const { email } = workflow;
   if (!email) return [];
   return [
@@ -74,9 +76,9 @@ function emailSteps(workflow: WorkflowDefinition, emailChannelKey: string) {
       ref: "email",
       type: "channel",
       channel_type: "email",
-      channel_key: emailChannelKey,
+      channel_key: config.channelKeys.email,
       channel_overrides: {
-        ...EMAIL_SENDER,
+        ...config.sender,
         open_tracking: false,
         link_tracking: false,
       },
@@ -96,7 +98,7 @@ function emailSteps(workflow: WorkflowDefinition, emailChannelKey: string) {
   ];
 }
 
-function workflowBody(workflow: WorkflowDefinition, channelKeys: ChannelKeys) {
+function workflowBody(workflow: WorkflowDefinition, config: StepConfig) {
   return {
     workflow: {
       name: workflow.name,
@@ -105,13 +107,13 @@ function workflowBody(workflow: WorkflowDefinition, channelKeys: ChannelKeys) {
         {
           ref: "in_app_feed",
           type: "channel",
-          channel_key: channelKeys.feed,
+          channel_key: config.channelKeys.feed,
           template: {
             markdown_body: workflow.feed.markdownBody,
             action_url: "{{ data.target_path }}",
           },
         },
-        ...emailSteps(workflow, channelKeys.email),
+        ...emailSteps(workflow, config),
       ],
     },
   };
@@ -123,6 +125,8 @@ export async function pushToKnock(
     feedChannelId: string;
     emailChannelId: string;
     workflows: WorkflowDefinition[];
+    // The email steps' sender; defaults to Cadence <notifications@anadollu.com>.
+    sender?: EmailSender;
   },
   log: (line: string) => void = console.log
 ): Promise<void> {
@@ -159,7 +163,10 @@ export async function pushToKnock(
     await api(
       "PUT",
       `/workflows/${workflow.key}?environment=${ENVIRONMENT}&commit=true&commit_message=${message}`,
-      workflowBody(workflow, channelKeys)
+      workflowBody(workflow, {
+        channelKeys,
+        sender: options.sender ?? emailSenderFrom(undefined),
+      })
     );
     await api(
       "PUT",

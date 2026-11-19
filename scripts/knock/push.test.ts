@@ -3,6 +3,7 @@ import { NotificationType } from "../../app/db/schema";
 import {
   EMAIL_LAYOUT,
   EMAIL_PRE_CONTENT,
+  emailSenderFrom,
   type WorkflowDefinition,
 } from "./definitions";
 import { pushToKnock, type ManagementApi } from "./push";
@@ -254,6 +255,35 @@ describe("pushToKnock", () => {
             '{% assign category_name = "Refunds" %}',
         },
       },
+    });
+  });
+
+  it("sends the email step from the configured sender", async () => {
+    const { api, calls } = fakeKnock();
+
+    await pushToKnock(
+      api,
+      {
+        ...channels,
+        workflows: [emailed],
+        sender: emailSenderFrom("Cadence Staging <notify@staging.example.com>"),
+      },
+      () => {}
+    );
+
+    const upsert = calls.find(
+      (call) =>
+        call.method === "PUT" &&
+        call.path.startsWith("/workflows/refund-request-approved?")
+    );
+    const steps = (
+      upsert?.body as {
+        workflow: { steps: { channel_overrides?: Record<string, unknown> }[] };
+      }
+    ).workflow.steps;
+    expect(steps[1].channel_overrides).toMatchObject({
+      from_name: "Cadence Staging",
+      from_address: "notify@staging.example.com",
     });
   });
 

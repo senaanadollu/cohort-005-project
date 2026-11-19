@@ -1,11 +1,12 @@
 // Pushes the Knock preference categories, email layout and workflows defined
 // in scripts/knock/definitions.ts to Knock's Development environment,
 // replacing what is there. Needs KNOCK_SERVICE_TOKEN, KNOCK_FEED_CHANNEL_ID
-// and KNOCK_EMAIL_CHANNEL_ID in .env.
+// and KNOCK_EMAIL_CHANNEL_ID in .env. The email sender is MAIL_FROM_ADDRESS,
+// the variable Receipts use, defaulting to Cadence <notifications@anadollu.com>.
 //
 //   npm run knock:push
 
-import { WORKFLOWS } from "./knock/definitions";
+import { WORKFLOWS, emailSenderFrom } from "./knock/definitions";
 import { pushToKnock, type ManagementApi } from "./knock/push";
 
 const MANAGEMENT_API = "https://control.knock.app/v1";
@@ -42,6 +43,7 @@ try {
     feedChannelId,
     emailChannelId,
     workflows: WORKFLOWS,
+    sender: emailSenderFrom(process.env.MAIL_FROM_ADDRESS),
   });
   console.log("Knock matches the repo.");
 } catch (error) {
