@@ -12,15 +12,13 @@ import { getCurrentUserId, getDevCountry } from "~/lib/session";
 import { getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
 import { eq, and, or, sql, desc } from "drizzle-orm";
 import { db } from "~/db";
+import { isTeamAdmin } from "~/lib/teams.server";
 import {
   users,
   courses,
   modules,
   lessons,
   lessonProgress,
-  teams,
-  teamMembers,
-  TeamMemberRole,
   LessonProgressStatus,
 } from "~/db/schema";
 
@@ -30,27 +28,6 @@ function getAllUsers() {
 
 function getUserById(id: number) {
   return db.select().from(users).where(eq(users.id, id)).get();
-}
-
-function getTeamForAdmin(userId: number) {
-  const membership = db
-    .select()
-    .from(teamMembers)
-    .where(
-      and(
-        eq(teamMembers.userId, userId),
-        eq(teamMembers.role, TeamMemberRole.Admin)
-      )
-    )
-    .get();
-
-  if (!membership) return undefined;
-
-  return db.select().from(teams).where(eq(teams.id, membership.teamId)).get();
-}
-
-function isTeamAdmin(userId: number) {
-  return !!getTeamForAdmin(userId);
 }
 
 function getCourseLessonIds(courseId: number): number[] {
@@ -227,7 +204,7 @@ export async function loader({ request, url }: Route.LoaderArgs) {
     devCountry,
     countryTierInfo,
     countries: COUNTRIES,
-    isTeamAdmin: currentUserId ? isTeamAdmin(currentUserId) : false,
+    isTeamAdmin: currentUserId ? isTeamAdmin(db, currentUserId) : false,
     // Signed for whoever is in the session, so it follows the DevUI switcher.
     // Null without Knock keys: the bell shows an empty Notification Feed.
     notificationFeed: currentUser

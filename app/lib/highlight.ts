@@ -18,6 +18,21 @@ export function parseHighlightId(
 }
 
 /**
+ * A list filter that a link to one of its items resets, e.g. the Team page's
+ * course filter and `?seat=<id>`. The filter remembers which linked id was
+ * current when it was chosen; once the link points elsewhere it reads as
+ * `reset` in that same render. Resetting in an effect instead would render the
+ * filtered list first, so the scroll could run before the row is there.
+ */
+export function filterForLink<Value>(
+  chosen: { value: Value; linkedId: number | null },
+  linkedId: number | null,
+  reset: Value
+): Value {
+  return chosen.linkedId === linkedId ? chosen.value : reset;
+}
+
+/**
  * The section of a page a link points at, from a query parameter such as
  * `?section=notifications`. Null unless the value is one of `sections`.
  */
