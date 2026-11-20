@@ -66,7 +66,7 @@ export async function checkEmailSandbox(
   let isSandbox: boolean | undefined;
   try {
     const answer = await (api ?? managementGet(token))(
-      `/channels?id=${encodeURIComponent(channelId)}&include=environment_settings`
+      `/channels?id=${encodeURIComponent(channelId)}&include[]=environment_settings`
     );
     const parsed = channelList.safeParse(answer);
     const channel = parsed.success

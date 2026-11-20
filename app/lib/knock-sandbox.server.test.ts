@@ -49,7 +49,7 @@ describe("checkEmailSandbox", () => {
     const { paths } = await check(env, channelWith(true));
 
     expect(paths).toEqual([
-      `/channels?id=${EMAIL_CHANNEL_ID}&include=environment_settings`,
+      `/channels?id=${EMAIL_CHANNEL_ID}&include[]=environment_settings`,
     ]);
   });
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   appUrlFromEnv,
+  parseMessagePage,
   removeNotificationsFor,
   senderFromEnv,
   type KnockMessages,
@@ -134,5 +135,26 @@ describe("removeNotificationsFor", () => {
       0
     );
     expect(archived).toEqual([]);
+  });
+});
+
+describe("parseMessagePage", () => {
+  // The shape Knock's GET /v1/messages answers with.
+  it("reads the messages from `items` and the cursor from `page_info`", () => {
+    const page = parseMessagePage({
+      items: [{ id: "msg_1", data: { comment_id: 7 }, status: "delivered" }],
+      page_info: { after: "cursor_2", before: null, page_size: 50 },
+    });
+
+    expect(page).toEqual({
+      items: [{ id: "msg_1", data: { comment_id: 7 } }],
+      next: "cursor_2",
+    });
+  });
+
+  it("has no next page when the cursor is null", () => {
+    const page = parseMessagePage({ items: [], page_info: { after: null } });
+
+    expect(page).toEqual({ items: [], next: undefined });
   });
 });

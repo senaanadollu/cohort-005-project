@@ -148,8 +148,9 @@ export interface KnockMessages {
 
 // Archives every message the workflow sent for this comment and returns how
 // many. Each message's own data is checked as well as Knock's filter: whether
-// the filter matches a subset of the data is not documented, and a loose match
-// must never archive someone else's Notification.
+// the filter matches a subset of the data (it does, checked against Knock) is
+// not documented, and a loose match must never archive someone else's
+// Notification.
 export async function removeNotificationsFor(
   messages: KnockMessages,
   workflowKey: string,
@@ -181,6 +182,24 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+// Reads one page of Knock's "list messages" answer, which holds the messages
+// under `items` (the Management API and the feed use `entries`).
+export function parseMessagePage(answer: unknown): {
+  items: KnockMessage[];
+  next?: string;
+} {
+  const body = asRecord(answer);
+  const items = Array.isArray(body.items) ? body.items : [];
+  const next = asRecord(body.page_info).after;
+  return {
+    items: items.map((item) => {
+      const message = asRecord(item);
+      return { id: String(message.id), data: asRecord(message.data) };
+    }),
+    next: typeof next === "string" && next ? next : undefined,
+  };
+}
+
 // The real client. Thin on purpose: no test constructs it. feedChannelId, when
 // set, limits the listing to feed messages.
 export function knockMessages(
@@ -206,16 +225,7 @@ export function knockMessages(
       if (!response.ok) {
         throw new Error(`Knock list messages answered ${response.status}`);
       }
-      const body = asRecord(await response.json());
-      const entries = Array.isArray(body.entries) ? body.entries : [];
-      const next = asRecord(body.page_info).after;
-      return {
-        items: entries.map((entry) => {
-          const message = asRecord(entry);
-          return { id: String(message.id), data: asRecord(message.data) };
-        }),
-        next: typeof next === "string" && next ? next : undefined,
-      };
+      return parseMessagePage(await response.json());
     },
     async archive(messageIds) {
       const response = await fetch(`${KNOCK_API}/messages/batch/archived`, {
