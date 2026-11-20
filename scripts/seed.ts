@@ -2807,6 +2807,52 @@ This course is still in draft while the cluster examples are rewritten against t
 
   console.log("Created Marta's Refund Request on her Team Licence.");
 
+  // ─── Bookmarks and Notes ───
+  // Emma and Olivia are enrolled in both courses, so their Saved pages name
+  // more than one Course. A Note is private to the Student who wrote it.
+
+  const emma = students[0];
+  const olivia = students[2];
+
+  db.insert(schema.bookmarks)
+    .values([
+      { userId: emma.id, lessonId: course1LessonIds[2], createdAt: daysAgo(20) },
+      { userId: emma.id, lessonId: course2LessonIds[1], createdAt: daysAgo(6) },
+      { userId: emma.id, lessonId: course1LessonIds[5], createdAt: daysAgo(2) },
+      { userId: olivia.id, lessonId: course2LessonIds[0], createdAt: daysAgo(12) },
+    ])
+    .run();
+
+  db.insert(schema.notes)
+    .values([
+      {
+        userId: emma.id,
+        lessonId: course1LessonIds[2],
+        body: "Type narrowing: check with typeof first, then the compiler knows.\n\n# not a heading, just how I mark things to revisit",
+        createdAt: daysAgo(20),
+        updatedAt: daysAgo(18),
+      },
+      {
+        userId: emma.id,
+        lessonId: course2LessonIds[1],
+        body: "201 for created, 204 when there is nothing to send back.",
+        createdAt: daysAgo(6),
+        updatedAt: daysAgo(6),
+      },
+      {
+        userId: olivia.id,
+        lessonId: course2LessonIds[0],
+        body: "Rewatch the middleware part before the quiz.",
+        createdAt: daysAgo(12),
+        updatedAt: daysAgo(3),
+      },
+    ])
+    .run();
+
+  console.log(
+    `Created ${countRows(schema.bookmarks)} bookmarks and ${countRows(schema.notes)} notes.`
+  );
+
   // ─── Flush watch events ───
   // Batched: the heartbeat makes these by far the largest table, and one
   // statement per row would dominate the seed's runtime.
@@ -2849,6 +2895,9 @@ This course is still in draft while the cluster examples are rewritten against t
   console.log(`  Enrollments: ${countRows(schema.enrollments)}`);
   console.log(`  Course ratings: ${countRows(schema.courseRatings)}`);
   console.log(`  Lesson comments: ${countRows(schema.comments)}`);
+  console.log(
+    `  Bookmarks: ${countRows(schema.bookmarks)}, notes: ${countRows(schema.notes)}`
+  );
   console.log(
     `  Lesson progress: ${countRows(schema.lessonProgress)} (${countRows(schema.lessonProgress, eq(schema.lessonProgress.status, LessonProgressStatus.Completed))} completed)`
   );
