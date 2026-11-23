@@ -1,0 +1,1 @@
+ALTER TABLE `pending_notifications` DROP COLUMN `trigger`;

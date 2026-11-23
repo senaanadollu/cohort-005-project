@@ -1,38 +1,30 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useFetcher } from "react-router";
+import { toast } from "sonner";
 import type { Route } from "./+types/team";
 import { getCurrentUserId } from "~/lib/session";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
+import { Textarea } from "~/components/ui/textarea";
 import { Users, BookOpen, Copy, Check, AlertTriangle } from "lucide-react";
 import { data, isRouteErrorResponse } from "react-router";
 import { db } from "~/db";
 import {
-  teams,
-  teamMembers,
   coupons,
   courses,
   users,
-  TeamMemberRole,
+  RefundStatus,
 } from "~/db/schema";
-import { eq, and } from "drizzle-orm";
-
-function getTeamForAdmin(userId: number) {
-  const membership = db
-    .select()
-    .from(teamMembers)
-    .where(
-      and(
-        eq(teamMembers.userId, userId),
-        eq(teamMembers.role, TeamMemberRole.Admin)
-      )
-    )
-    .get();
-
-  if (!membership) return undefined;
-
-  return db.select().from(teams).where(eq(teams.id, membership.teamId)).get();
-}
+import { eq } from "drizzle-orm";
+import { getTeamForAdmin } from "~/lib/teams.server";
+import {
+  getSeatAvailability,
+  listTeamLicences,
+  type SeatAvailability,
+} from "~/lib/refunds.server";
+import { formatPrice } from "~/lib/utils";
+import { filterForLink } from "~/lib/highlight";
+import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
 
 function getCouponsForTeam(teamId: number) {
   return db.select().from(coupons).where(eq(coupons.teamId, teamId)).all();
@@ -60,6 +52,7 @@ interface CouponRow {
   courseId: number;
   courseTitle: string;
   redeemedByEmail: string | null;
+  availability: SeatAvailability;
   createdAt: string;
 }
 
@@ -77,7 +70,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw data("Select a user from the DevUI panel.", { status: 401 });
   }
 
-  const team = getTeamForAdmin(currentUserId);
+  const team = getTeamForAdmin(db, currentUserId);
 
   if (!team) {
     throw data("You don't have a team. Purchase team seats to create one.", {
@@ -100,6 +93,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   >();
 
   for (const coupon of allCoupons) {
+    // A refunded Team Licence's Unclaimed Seats can never be claimed, so
+    // they no longer count towards the team's seats.
+    if (coupon.refundedAt !== null) continue;
     if (!courseMap.has(coupon.courseId)) {
       const course = getCourseById(coupon.courseId);
       courseMap.set(coupon.courseId, {
@@ -141,11 +137,14 @@ export async function loader({ request }: Route.LoaderArgs) {
       courseId: coupon.courseId,
       courseTitle: course?.title ?? "Unknown Course",
       redeemedByEmail,
+      availability: getSeatAvailability(db, coupon),
       createdAt: coupon.createdAt,
     };
   });
 
-  return { courseStats, couponRows };
+  const teamLicences = listTeamLicences(db, currentUserId, new Date());
+
+  return { courseStats, couponRows, teamLicences };
 }
 
 function CopyButton({ code }: { code: string }) {
@@ -181,8 +180,16 @@ function CopyButton({ code }: { code: string }) {
 }
 
 export default function Team({ loaderData }: Route.ComponentProps) {
-  const { courseStats, couponRows } = loaderData;
-  const [courseFilter, setCourseFilter] = useState<number | "all">("all");
+  const { courseStats, couponRows, teamLicences } = loaderData;
+  const highlightedSeatId = useHighlightedId("seat");
+  // A link to a Seat must find its row, so it clears any course filter in the
+  // same render that highlights the row, before the scroll runs.
+  const [chosenFilter, setChosenFilter] = useState<{
+    value: number | "all";
+    linkedId: number | null;
+  }>({ value: "all", linkedId: highlightedSeatId });
+  const courseFilter = filterForLink(chosenFilter, highlightedSeatId, "all");
+  useScrollToHighlight(highlightedSeatId);
 
   const filteredCoupons =
     courseFilter === "all"
@@ -243,6 +250,17 @@ export default function Team({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
+      {teamLicences.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-4 text-lg font-semibold">Team Licences</h2>
+          <div className="space-y-3">
+            {teamLicences.map((licence) => (
+              <TeamLicenceRow key={licence.purchaseId} licence={licence} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Coupon list */}
       <div>
         <div className="mb-4 flex items-center justify-between">
@@ -251,9 +269,11 @@ export default function Team({ loaderData }: Route.ComponentProps) {
             <select
               value={courseFilter}
               onChange={(e) =>
-                setCourseFilter(
-                  e.target.value === "all" ? "all" : Number(e.target.value)
-                )
+                setChosenFilter({
+                  value:
+                    e.target.value === "all" ? "all" : Number(e.target.value),
+                  linkedId: highlightedSeatId,
+                })
               }
               className="rounded-md border border-input bg-background px-3 py-1.5 text-sm"
             >
@@ -282,7 +302,11 @@ export default function Team({ loaderData }: Route.ComponentProps) {
               </thead>
               <tbody>
                 {filteredCoupons.map((coupon) => (
-                  <tr key={coupon.id} className="border-b last:border-0">
+                  <tr
+                    key={coupon.id}
+                    className="border-b last:border-0"
+                    data-highlighted={coupon.id === highlightedSeatId || undefined}
+                  >
                     <td className="px-4 py-3">
                       <code className="rounded bg-muted px-2 py-0.5 text-xs">
                         {coupon.code}
@@ -296,6 +320,12 @@ export default function Team({ loaderData }: Route.ComponentProps) {
                         <span className="text-muted-foreground">
                           Claimed by {coupon.redeemedByEmail}
                         </span>
+                      ) : coupon.availability === "refunded" ? (
+                        <span className="text-muted-foreground">Refunded</span>
+                      ) : coupon.availability === "on_hold" ? (
+                        <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                          On hold
+                        </span>
                       ) : (
                         <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
                           Unclaimed
@@ -303,7 +333,7 @@ export default function Team({ loaderData }: Route.ComponentProps) {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {!coupon.redeemedByEmail && (
+                      {coupon.availability === "available" && (
                         <CopyButton code={coupon.code} />
                       )}
                     </td>
@@ -315,6 +345,102 @@ export default function Team({ loaderData }: Route.ComponentProps) {
         )}
       </div>
     </div>
+  );
+}
+
+type TeamLicence = Route.ComponentProps["loaderData"]["teamLicences"][number];
+
+function TeamLicenceRow({ licence }: { licence: TeamLicence }) {
+  const fetcher = useFetcher<{ errors?: Record<string, string> }>();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const isSubmitting = fetcher.state !== "idle";
+  const refundRequest = licence.latestRefundRequest;
+
+  useEffect(() => {
+    const firstError = Object.values(fetcher.data?.errors ?? {})[0];
+    if (fetcher.state === "idle" && firstError) {
+      toast.error(firstError);
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-medium">{licence.courseTitle}</p>
+            <p className="text-sm text-muted-foreground">
+              {licence.seatCount} seats · {licence.claimedSeatCount} claimed ·{" "}
+              {formatPrice(licence.amountPaid)} · bought{" "}
+              {new Date(licence.purchasedAt).toLocaleDateString()}
+            </p>
+          </div>
+          {refundRequest?.status === RefundStatus.Open && (
+            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+              Refund requested — seats on hold
+            </span>
+          )}
+          {refundRequest?.status === RefundStatus.Approved && (
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              Refunded
+            </span>
+          )}
+          {licence.canRequestRefund && !isFormOpen && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => setIsFormOpen(true)}
+            >
+              Request a refund
+            </Button>
+          )}
+        </div>
+
+        {refundRequest?.status === RefundStatus.Declined && refundRequest.decisionNote && (
+          <p className="mt-3 rounded-md bg-muted p-2 text-sm">
+            <span className="font-medium">Refund declined: </span>
+            {refundRequest.decisionNote}
+          </p>
+        )}
+
+        {licence.canRequestRefund && isFormOpen && (
+          <fetcher.Form
+            method="post"
+            action={`/courses/${licence.courseSlug}/refund`}
+            className="mt-4 space-y-2"
+          >
+            <p className="text-xs text-muted-foreground">
+              We will send {formatPrice(licence.amountPaid)} back once someone
+              has read your note. Until then, none of this licence&apos;s seats
+              can be claimed. You can ask until{" "}
+              {/* A calendar day, so read it as local midnight, not UTC. */}
+              {new Date(`${licence.lastDayInWindow}T00:00`).toLocaleDateString()}.
+            </p>
+            <input type="hidden" name="purchaseId" value={licence.purchaseId} />
+            <Textarea
+              name="reason"
+              rows={3}
+              required
+              placeholder="What went wrong?"
+            />
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" disabled={isSubmitting}>
+                {isSubmitting ? "Sending..." : "Request a refund"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFormOpen(false)}
+              >
+                Keep it
+              </Button>
+            </div>
+          </fetcher.Form>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

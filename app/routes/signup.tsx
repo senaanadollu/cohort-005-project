@@ -5,6 +5,9 @@ import type { Route } from "./+types/signup";
 import { UserRole, users } from "~/db/schema";
 import { setCurrentUserId, getCurrentUserId } from "~/lib/session";
 import { parseFormData } from "~/lib/validation";
+import { signInDestination } from "~/lib/redirect";
+import { getDevUIData } from "~/lib/dev-ui.server";
+import { DevUI } from "~/components/dev-ui";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
@@ -32,10 +35,10 @@ export async function loader({ request, url }: Route.LoaderArgs) {
   const currentUserId = await getCurrentUserId(request);
   if (currentUserId) {
     const redirectTo = url.searchParams.get("redirectTo");
-    const destination = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/courses";
+    const destination = signInDestination(redirectTo);
     throw redirect(destination);
   }
-  return {};
+  return { devUI: await getDevUIData(request) };
 }
 
 export async function action({ request, url }: Route.ActionArgs) {
@@ -58,7 +61,7 @@ export async function action({ request, url }: Route.ActionArgs) {
   const { name, email } = parsed.data;
 
   const redirectTo = url.searchParams.get("redirectTo");
-  const destination = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/courses";
+  const destination = signInDestination(redirectTo);
 
   // If email already exists, silently log them in
   const existingUser = db
@@ -85,12 +88,13 @@ export async function action({ request, url }: Route.ActionArgs) {
   });
 }
 
-export default function SignUp() {
+export default function SignUp({ loaderData }: Route.ComponentProps) {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo");
+  const { devUI } = loaderData;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
@@ -170,6 +174,16 @@ export default function SignUp() {
           </Link>
         </p>
       </div>
+      {devUI && (
+        <DevUI
+          users={devUI.users}
+          currentUser={null}
+          devCountry={devUI.devCountry}
+          countryTierInfo={devUI.countryTierInfo}
+          countries={devUI.countries}
+          switchUserRedirectTo={signInDestination(redirectTo)}
+        />
+      )}
     </div>
   );
 }

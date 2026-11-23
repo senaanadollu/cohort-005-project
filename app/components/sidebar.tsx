@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Shield,
   Tag,
+  Receipt,
   Users,
   UsersRound,
   Moon,
@@ -40,6 +41,8 @@ interface SidebarProps {
   currentUser: CurrentUser | null;
   recentCourses?: RecentCourse[];
   isTeamAdmin?: boolean;
+  // Shown beside the "Cadence" title.
+  notificationBell?: React.ReactNode;
 }
 
 interface NavItem {
@@ -98,6 +101,12 @@ const navItems: NavItem[] = [
     icon: <Tag className="size-4" />,
     roles: [UserRole.Admin],
   },
+  {
+    label: "Refund Requests",
+    to: "/admin/refunds",
+    icon: <Receipt className="size-4" />,
+    roles: [UserRole.Admin],
+  },
 ];
 
 function isVisible(item: NavItem, role: UserRole | null): boolean {
@@ -110,6 +119,7 @@ export function Sidebar({
   currentUser,
   recentCourses = [],
   isTeamAdmin = false,
+  notificationBell,
 }: SidebarProps) {
   const currentUserRole = currentUser?.role ?? null;
   const [isDark, setIsDark] = useState(false);
@@ -133,6 +143,7 @@ export function Sidebar({
         <NavLink to="/" className="text-lg font-bold tracking-tight">
           Cadence
         </NavLink>
+        {notificationBell && <div className="ml-auto">{notificationBell}</div>}
       </div>
 
       <nav className="flex-1 space-y-1 p-3">

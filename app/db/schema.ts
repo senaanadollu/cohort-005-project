@@ -42,6 +42,18 @@ export enum TeamMemberRole {
   Member = "member",
 }
 
+// One member per Notification. The value is the Knock workflow key, and the
+// first half of every idempotency key.
+export enum NotificationType {
+  DiscussionReply = "discussion-reply",
+  RefundRequestOpened = "refund-request-opened",
+  RefundRequestApproved = "refund-request-approved",
+  RefundRequestDeclined = "refund-request-declined",
+  SeatClaimed = "seat-claimed",
+  NewEnrollment = "new-enrollment",
+  DiscussionQuestion = "discussion-question",
+}
+
 // ─── Tables ───
 
 export const users = sqliteTable("users", {
@@ -240,7 +252,7 @@ export const refunds = sqliteTable(
       .notNull()
       .$type<RefundStatus>()
       .default(RefundStatus.Open),
-    // The learner's own words, in the box on the course page.
+    // The student's own words, in the box on the course page.
     reason: text("reason").notNull(),
     // Null until someone approves — a declined request refunds nothing.
     amountRefunded: integer("amount_refunded"),
@@ -249,6 +261,9 @@ export const refunds = sqliteTable(
       .$defaultFn(() => new Date().toISOString()),
     resolvedAt: text("resolved_at"),
     resolvedByUserId: integer("resolved_by_user_id").references(() => users.id),
+    // The Platform Admin's note to the buyer. Required on a decline, optional
+    // on an approval. Enforced on write.
+    decisionNote: text("decision_note"),
   },
   (table) => [index("refunds_purchase_idx").on(table.purchaseId)]
 );
@@ -288,6 +303,9 @@ export const coupons = sqliteTable("coupons", {
     .references(() => purchases.id),
   redeemedByUserId: integer("redeemed_by_user_id").references(() => users.id),
   redeemedAt: text("redeemed_at"),
+  // Set on every Unclaimed Seat when its Team Licence's Refund Request is
+  // approved. The Seat can never be claimed after that.
+  refundedAt: text("refunded_at"),
   createdAt: text("created_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -353,6 +371,35 @@ export const comments = sqliteTable(
     index("comments_parent_idx").on(table.parentId),
   ]
 );
+
+// A Notification Cadence owes someone, recorded in the same transaction as the
+// event that caused it and sent to Knock afterwards by the dispatcher (ADR
+// 0013). Holds no recipients or wording: those are read when it is sent.
+export const pendingNotifications = sqliteTable("pending_notifications", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  type: text("type").notNull().$type<NotificationType>(),
+  // The id of the thing that happened, e.g. the comment for a Discussion Reply.
+  subjectId: integer("subject_id").notNull(),
+  // `<type>:<subject id>`. Unique, so one event can't be recorded twice, and
+  // sent as Knock's Idempotency-Key, so a retry can't notify twice.
+  idempotencyKey: text("idempotency_key").notNull().unique(),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  // Null while pending. Set once the row is done: sent to Knock, or closed
+  // without a trigger because the subject is gone or nobody qualifies.
+  sentAt: text("sent_at"),
+  // How many times the dispatcher has sent this row to Knock.
+  attempts: integer("attempts").notNull().default(0),
+  // When the first attempt was made. Knock remembers an idempotency key for 24
+  // hours from then, so no attempt is made more than 20 hours later.
+  firstAttemptAt: text("first_attempt_at"),
+  // Null means due now. Set after a failure that will be retried.
+  nextAttemptAt: text("next_attempt_at"),
+  // Set when the dispatcher gives up: a non-429 4xx, or no success inside the
+  // retry budget. A failed row is kept and never sent again.
+  failedAt: text("failed_at"),
+});
 
 export const videoWatchEvents = sqliteTable("video_watch_events", {
   id: integer("id").primaryKey({ autoIncrement: true }),

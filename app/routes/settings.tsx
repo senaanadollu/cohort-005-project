@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { z } from "zod";
 import type { Route } from "./+types/settings";
@@ -10,19 +10,22 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import {
-  UserRole,
-  RefundStatus,
-  users,
-  courses,
-  purchases,
-  refunds,
-} from "~/db/schema";
+import { UserRole, RefundStatus, users } from "~/db/schema";
 import { AlertTriangle } from "lucide-react";
 import { data, isRouteErrorResponse, Link } from "react-router";
 import { db } from "~/db";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { isTeamAdmin } from "~/lib/teams.server";
 import { formatPrice } from "~/lib/utils";
+import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
+import { NotificationPreferencesCard } from "~/components/notification-preferences-card";
+import { preferenceRowsFor } from "~/lib/notification-preferences";
+import { useHighlightedId, useScrollToHighlight } from "~/lib/use-highlight";
+import {
+  parseHighlightSection,
+  SETTINGS_SECTION_PARAM,
+  SETTINGS_SECTIONS,
+} from "~/lib/highlight";
 
 const settingsSchema = z.object({
   name: z.string().trim().min(1, "Name cannot be empty."),
@@ -55,25 +58,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw data("User not found.", { status: 404 });
   }
 
-  const openRefundRequests = db
-    .select({
-      id: refunds.id,
-      courseTitle: courses.title,
-      courseSlug: courses.slug,
-      amountPaid: purchases.amountPaid,
-      reason: refunds.reason,
-      requestedAt: refunds.requestedAt,
-    })
-    .from(refunds)
-    .innerJoin(purchases, eq(refunds.purchaseId, purchases.id))
-    .innerJoin(courses, eq(purchases.courseId, courses.id))
-    .where(
-      and(
-        eq(purchases.userId, currentUserId),
-        eq(refunds.status, RefundStatus.Open)
-      )
-    )
-    .all();
+  const refundRequests = listRefundRequestsForBuyer(db, currentUserId);
+  const preferenceRows = preferenceRowsFor({
+    role: currentUser.role,
+    isTeamAdmin: isTeamAdmin(db, currentUserId),
+  });
 
   return {
     user: {
@@ -83,7 +72,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       bio: currentUser.bio,
       role: currentUser.role,
     },
-    openRefundRequests,
+    refundRequests,
+    preferenceRows,
   };
 }
 
@@ -122,7 +112,18 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { user, openRefundRequests } = loaderData;
+  const { user, refundRequests, preferenceRows } = loaderData;
+  const openCount = refundRequests.filter(
+    (refundRequest) => refundRequest.status === RefundStatus.Open
+  ).length;
+  const highlightedId = useHighlightedId("refundRequest");
+  const [searchParams] = useSearchParams();
+  const highlightedSection = parseHighlightSection(
+    searchParams,
+    SETTINGS_SECTION_PARAM,
+    SETTINGS_SECTIONS
+  );
+  useScrollToHighlight(highlightedId ?? highlightedSection);
   const fetcher = useFetcher();
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -209,19 +210,34 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
         </CardContent>
       </Card>
 
-      {openRefundRequests.length > 0 && (
+      <NotificationPreferencesCard
+        rows={preferenceRows}
+        highlighted={
+          highlightedId === null && highlightedSection === "notifications"
+        }
+      />
+
+      {refundRequests.length > 0 && (
         <Card className="mt-8 max-w-md">
           <CardHeader>
             <h2 className="text-lg font-semibold">Refund Requests</h2>
-            <p className="text-sm text-muted-foreground">
-              {openRefundRequests.length === 1
-                ? "One refund request is waiting on us."
-                : `${openRefundRequests.length} refund requests are waiting on us.`}
-            </p>
+            {openCount > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {openCount === 1
+                  ? "One refund request is waiting on us."
+                  : `${openCount} refund requests are waiting on us.`}
+              </p>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
-            {openRefundRequests.map((refundRequest) => (
-              <div key={refundRequest.id} className="rounded-md border p-3">
+            {refundRequests.map((refundRequest) => (
+              <div
+                key={refundRequest.id}
+                className="rounded-md border p-3"
+                data-highlighted={
+                  refundRequest.id === highlightedId || undefined
+                }
+              >
                 <div className="flex items-start justify-between gap-3">
                   <Link
                     to={`/courses/${refundRequest.courseSlug}`}
@@ -229,21 +245,63 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
                   >
                     {refundRequest.courseTitle}
                   </Link>
-                  <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                    Open
-                  </span>
+                  <RefundStatusBadge status={refundRequest.status} />
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {formatPrice(refundRequest.amountPaid)} · raised{" "}
                   {new Date(refundRequest.requestedAt).toLocaleDateString()}
+                  {refundRequest.resolvedAt && (
+                    <>
+                      {" "}
+                      · decided{" "}
+                      {new Date(refundRequest.resolvedAt).toLocaleDateString()}
+                    </>
+                  )}
                 </p>
                 <p className="mt-2 text-sm">{refundRequest.reason}</p>
+                {refundRequest.decisionNote && (
+                  <p className="mt-2 rounded-md bg-muted p-2 text-sm">
+                    <span className="font-medium">Our note: </span>
+                    {refundRequest.decisionNote}
+                  </p>
+                )}
               </div>
             ))}
           </CardContent>
         </Card>
       )}
     </div>
+  );
+}
+
+const REFUND_STATUS_BADGES: Record<
+  RefundStatus,
+  { label: string; className: string }
+> = {
+  [RefundStatus.Open]: {
+    label: "Open",
+    className:
+      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+  },
+  [RefundStatus.Approved]: {
+    label: "Approved",
+    className:
+      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+  },
+  [RefundStatus.Declined]: {
+    label: "Declined",
+    className: "bg-muted text-muted-foreground",
+  },
+};
+
+function RefundStatusBadge({ status }: { status: RefundStatus }) {
+  const badge = REFUND_STATUS_BADGES[status];
+  return (
+    <span
+      className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}
+    >
+      {badge.label}
+    </span>
   );
 }
 

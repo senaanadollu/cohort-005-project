@@ -4,6 +4,9 @@ import { z } from "zod";
 import type { Route } from "./+types/login";
 import { setCurrentUserId, getCurrentUserId } from "~/lib/session";
 import { parseFormData } from "~/lib/validation";
+import { signInDestination } from "~/lib/redirect";
+import { getDevUIData } from "~/lib/dev-ui.server";
+import { DevUI } from "~/components/dev-ui";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Card, CardContent } from "~/components/ui/card";
@@ -31,10 +34,10 @@ export async function loader({ request, url }: Route.LoaderArgs) {
   const currentUserId = await getCurrentUserId(request);
   if (currentUserId) {
     const redirectTo = url.searchParams.get("redirectTo");
-    const destination = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/courses";
+    const destination = signInDestination(redirectTo);
     throw redirect(destination);
   }
-  return {};
+  return { devUI: await getDevUIData(request) };
 }
 
 export async function action({ request, url }: Route.ActionArgs) {
@@ -62,7 +65,7 @@ export async function action({ request, url }: Route.ActionArgs) {
   }
 
   const redirectTo = url.searchParams.get("redirectTo");
-  const destination = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/courses";
+  const destination = signInDestination(redirectTo);
 
   const cookie = await setCurrentUserId(request, user.id);
   throw redirect(destination, {
@@ -70,12 +73,13 @@ export async function action({ request, url }: Route.ActionArgs) {
   });
 }
 
-export default function Login() {
+export default function Login({ loaderData }: Route.ComponentProps) {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo");
+  const { devUI } = loaderData;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
@@ -144,6 +148,16 @@ export default function Login() {
           </Link>
         </p>
       </div>
+      {devUI && (
+        <DevUI
+          users={devUI.users}
+          currentUser={null}
+          devCountry={devUI.devCountry}
+          countryTierInfo={devUI.countryTierInfo}
+          countries={devUI.countries}
+          switchUserRedirectTo={signInDestination(redirectTo)}
+        />
+      )}
     </div>
   );
 }

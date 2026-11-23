@@ -1,21 +1,24 @@
-import { Outlet } from "react-router";
+import { Outlet, redirect } from "react-router";
 import type { Route } from "./+types/layout.app";
 import { Sidebar } from "~/components/sidebar";
 import { DevUI } from "~/components/dev-ui";
+import {
+  NotificationBell,
+  NotificationFeedSessionProvider,
+} from "~/components/notification-feed";
+import { notificationFeedSession } from "~/lib/knock-feed.server";
 import { Toaster } from "sonner";
 import { getCurrentUserId, getDevCountry } from "~/lib/session";
 import { getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
 import { eq, and, or, sql, desc } from "drizzle-orm";
 import { db } from "~/db";
+import { isTeamAdmin } from "~/lib/teams.server";
 import {
   users,
   courses,
   modules,
   lessons,
   lessonProgress,
-  teams,
-  teamMembers,
-  TeamMemberRole,
   LessonProgressStatus,
 } from "~/db/schema";
 
@@ -25,27 +28,6 @@ function getAllUsers() {
 
 function getUserById(id: number) {
   return db.select().from(users).where(eq(users.id, id)).get();
-}
-
-function getTeamForAdmin(userId: number) {
-  const membership = db
-    .select()
-    .from(teamMembers)
-    .where(
-      and(
-        eq(teamMembers.userId, userId),
-        eq(teamMembers.role, TeamMemberRole.Admin)
-      )
-    )
-    .get();
-
-  if (!membership) return undefined;
-
-  return db.select().from(teams).where(eq(teams.id, membership.teamId)).get();
-}
-
-function isTeamAdmin(userId: number) {
-  return !!getTeamForAdmin(userId);
 }
 
 function getCourseLessonIds(courseId: number): number[] {
@@ -171,9 +153,15 @@ function getRecentlyProgressedCourses(userId: number, limit: number = 3) {
     .all();
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const users = getAllUsers();
+export async function loader({ request, url }: Route.LoaderArgs) {
   const currentUserId = await getCurrentUserId(request);
+  if (!currentUserId) {
+    throw redirect(
+      `/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`
+    );
+  }
+
+  const users = getAllUsers();
   const currentUser = currentUserId ? getUserById(currentUserId) : null;
   const devCountry = await getDevCountry(request);
   const countryTierInfo = getCountryTierInfo(devCountry);
@@ -185,7 +173,11 @@ export async function loader({ request }: Route.LoaderArgs) {
           course.courseId
         );
         const totalLessons = getTotalLessonCount(course.courseId);
-        const progress = calculateProgress(currentUserId, course.courseId, false);
+        const progress = calculateProgress(
+          currentUserId,
+          course.courseId,
+          false
+        );
         return {
           courseId: course.courseId,
           title: course.courseTitle,
@@ -212,7 +204,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     devCountry,
     countryTierInfo,
     countries: COUNTRIES,
-    isTeamAdmin: currentUserId ? isTeamAdmin(currentUserId) : false,
+    isTeamAdmin: currentUserId ? isTeamAdmin(db, currentUserId) : false,
+    // Signed for whoever is in the session, so it follows the DevUI switcher.
+    // Null without Knock keys: the bell shows an empty Notification Feed.
+    notificationFeed: currentUser
+      ? await notificationFeedSession(currentUser)
+      : null,
   };
 }
 
@@ -225,26 +222,36 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     countryTierInfo,
     countries,
     isTeamAdmin: userIsTeamAdmin,
+    notificationFeed,
   } = loaderData;
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar
-        currentUser={currentUser}
-        recentCourses={recentCourses}
-        isTeamAdmin={userIsTeamAdmin}
-      />
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
-      </main>
-      <DevUI
-        users={users}
-        currentUser={currentUser}
-        devCountry={devCountry}
-        countryTierInfo={countryTierInfo}
-        countries={countries}
-      />
-      <Toaster position="bottom-right" richColors closeButton />
-    </div>
+    <NotificationFeedSessionProvider session={notificationFeed}>
+      <div className="flex h-screen overflow-hidden">
+        <Sidebar
+          currentUser={currentUser}
+          recentCourses={recentCourses}
+          isTeamAdmin={userIsTeamAdmin}
+          notificationBell={
+            // Keyed by user: switching users starts a fresh feed.
+            <NotificationBell
+              key={notificationFeed?.knockUserId ?? "none"}
+              session={notificationFeed}
+            />
+          }
+        />
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+        <DevUI
+          users={users}
+          currentUser={currentUser}
+          devCountry={devCountry}
+          countryTierInfo={countryTierInfo}
+          countries={countries}
+        />
+        <Toaster position="bottom-right" richColors closeButton />
+      </div>
+    </NotificationFeedSessionProvider>
   );
 }
