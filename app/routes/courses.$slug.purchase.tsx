@@ -36,7 +36,8 @@ import { UserAvatar } from "~/components/user-avatar";
 import { data } from "react-router";
 import { formatDuration, formatPrice } from "~/lib/utils";
 import { resolveCountry } from "~/lib/country.server";
-import { calculatePppPrice, getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
+import { getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
+import { purchases as purchasesModule } from "~/modules/purchases/index.server";
 import { parseFormData, parseParams } from "~/lib/validation";
 import { enrollStudent, isEnrolled } from "~/lib/enrollments.server";
 import { defaultNotifications } from "~/lib/notifications.server";
@@ -270,9 +271,7 @@ export async function loader({ params, request, url }: Route.LoaderArgs) {
   );
 
   const country = await resolveCountry(request);
-  const pppPrice = courseWithDetails.pppEnabled
-    ? calculatePppPrice(courseWithDetails.price, country)
-    : courseWithDetails.price;
+  const pppPrice = purchasesModule.purchasingPowerPrice(courseWithDetails, country);
   const tierInfo = getCountryTierInfo(country);
   const countryName = country
     ? (COUNTRIES.find((c) => c.code === country)?.name ?? country)
@@ -312,9 +311,7 @@ export async function action({ params, request }: Route.ActionArgs) {
   }
 
   const country = await resolveCountry(request);
-  const pppPrice = course.pppEnabled
-    ? calculatePppPrice(course.price, country)
-    : course.price;
+  const pppPrice = purchasesModule.purchasingPowerPrice(course, country);
 
   if (parsed.data.intent === "confirm-purchase") {
     if (isEnrolled(db, currentUserId, course.id)) {

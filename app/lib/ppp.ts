@@ -32,11 +32,6 @@ export function getDiscountForCountry(countryCode: string | null): number {
   return PPP_TIERS[tier].discount;
 }
 
-export function calculatePppPrice(priceInCents: number, countryCode: string | null): number {
-  const discount = getDiscountForCountry(countryCode);
-  return Math.round(priceInCents * (1 - discount));
-}
-
 export function getCountryTierInfo(countryCode: string | null) {
   const tier = getTierForCountry(countryCode);
   const { discount, label } = PPP_TIERS[tier];

@@ -23,7 +23,7 @@ import { UserAvatar } from "~/components/user-avatar";
 import { getCurrentUserId } from "~/lib/session";
 import { formatPrice } from "~/lib/utils";
 import { resolveCountry } from "~/lib/country.server";
-import { calculatePppPrice } from "~/lib/ppp";
+import { purchases } from "~/modules/purchases/index.server";
 import { StarRating } from "~/components/star-rating";
 
 function buildCourseQuery(
@@ -313,9 +313,7 @@ export async function loader({ request, url }: Route.LoaderArgs) {
 
   const coursesWithLessonCount = courses.map((course) => {
     const userProgress = progressMap.get(course.id);
-    const pppPrice = course.pppEnabled
-      ? calculatePppPrice(course.price, country)
-      : course.price;
+    const pppPrice = purchases.purchasingPowerPrice(course, country);
     const rating = ratingSummaries.get(course.id);
     return {
       ...course,

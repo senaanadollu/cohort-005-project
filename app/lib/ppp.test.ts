@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   getTierForCountry,
   getDiscountForCountry,
-  calculatePppPrice,
   getCountryTierInfo,
   checkPppAccess,
 } from "./ppp";
@@ -63,34 +62,6 @@ describe("PPP Config", () => {
 
     it("returns 0 for null country", () => {
       expect(getDiscountForCountry(null)).toBe(0);
-    });
-  });
-
-  // ─── Price Calculation ───
-
-  describe("calculatePppPrice", () => {
-    it("returns full price for tier 1", () => {
-      expect(calculatePppPrice(4999, "US")).toBe(4999);
-    });
-
-    it("applies 30% discount for tier 2", () => {
-      expect(calculatePppPrice(4999, "BR")).toBe(3499);
-    });
-
-    it("applies 50% discount for tier 3", () => {
-      expect(calculatePppPrice(4999, "IN")).toBe(2500);
-    });
-
-    it("applies 70% discount for tier 4", () => {
-      expect(calculatePppPrice(4999, "NG")).toBe(1500);
-    });
-
-    it("returns 0 for free courses", () => {
-      expect(calculatePppPrice(0, "IN")).toBe(0);
-    });
-
-    it("returns full price for null country", () => {
-      expect(calculatePppPrice(4999, null)).toBe(4999);
     });
   });
 

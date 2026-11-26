@@ -45,10 +45,8 @@ import { data, isRouteErrorResponse } from "react-router";
 import { formatDuration, formatPrice } from "~/lib/utils";
 import { renderMarkdown } from "~/lib/markdown.server";
 import { resolveCountry } from "~/lib/country.server";
-import {
-  calculatePppPrice,
-  getCountryTierInfo,
-} from "~/lib/ppp";
+import { getCountryTierInfo } from "~/lib/ppp";
+import { purchases } from "~/modules/purchases/index.server";
 import { parseFormData } from "~/lib/validation";
 import { MAX_RATING, MIN_RATING } from "~/lib/ratings";
 import { StarRating, StarRatingInput } from "~/components/star-rating";
@@ -426,9 +424,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     : null;
 
   const country = await resolveCountry(request);
-  const pppPrice = courseWithDetails.pppEnabled
-    ? calculatePppPrice(courseWithDetails.price, country)
-    : courseWithDetails.price;
+  const pppPrice = purchases.purchasingPowerPrice(courseWithDetails, country);
   const tierInfo = getCountryTierInfo(country);
 
   return {
