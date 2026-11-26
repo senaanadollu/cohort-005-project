@@ -51,6 +51,10 @@ _Avoid_: Reply (on its own), Answer
 A single payment for a course. It is either an Individual Purchase or a Team Licence.
 _Avoid_: Order, Transaction
 
+**Purchasing-Power Price**:
+What a course costs a buyer in a given country. It is the course's full price when the buyer's country is unknown or the course has no purchasing-power pricing.
+_Avoid_: PPP price, Regional price, Discount
+
 **Individual Purchase**:
 A Purchase a Student makes for themselves. It gives the buyer an Enrollment.
 
