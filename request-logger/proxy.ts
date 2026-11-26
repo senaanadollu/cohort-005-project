@@ -22,7 +22,6 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Duplex } from "node:stream";
 import { fileURLToPath } from "node:url";
-import { styleText } from "node:util";
 import { renderMarkdown } from "./render";
 import {
   resolveChoice,
@@ -32,14 +31,32 @@ import {
   type ResolvedTarget,
 } from "./agents";
 import { askChoice, clearChoice, loadChoice, saveChoice } from "./config";
+import {
+  forwardHeaders,
+  upstreamConnection,
+  upstreamPathPrefix,
+  type ProxyTarget,
+} from "./proxy/upstream";
+import {
+  trackBurst,
+  burstKey,
+  BURST_THRESHOLD,
+  BURST_WINDOW_MS,
+  type BurstState,
+} from "./proxy/burst-guard";
+import { bold, dim, printBanner, wrap } from "./proxy/terminal";
 
-/**
- * A resolved target the proxy can actually route to and render: a catalogue
- * ResolvedTarget or a student-typed CustomTarget. The two are used
- * interchangeably everywhere below except upstreamConnection, which is the
- * one place their upstream host is found differently.
- */
-type ProxyTarget = ResolvedTarget | CustomTarget;
+// The pure pieces live in ./proxy/; they are re-exported so importers (and the
+// tests) keep using "./proxy".
+export { upstreamConnection, upstreamPathPrefix } from "./proxy/upstream";
+export {
+  BURST_THRESHOLD,
+  BURST_WINDOW_MS,
+  burstKey,
+  trackBurst,
+  type BurstResult,
+  type BurstState,
+} from "./proxy/burst-guard";
 
 const PORT = Number(process.env.PORT ?? 8787);
 
@@ -56,80 +73,6 @@ function baseName(target: ProxyTarget): string {
   const iso = new Date().toISOString(); // 2026-07-07T14:32:05.123Z
   const stamp = iso.replace(/:/g, "-").replace(".", "-").replace("Z", "");
   return `${stamp}_${target.agent}`;
-}
-
-/**
- * Where a target's traffic actually goes: a scheme, a host and a port.
- *
- * A catalogue ResolvedTarget is always HTTPS on 443 — every provider in the
- * catalogue is a public HTTPS API, so this has never needed to vary, and
- * still does not: it is read straight off upstreamHost, unchanged. A
- * CustomTarget can be anything the student typed, including plain HTTP on an
- * arbitrary port (a local Ollama server, say), so its scheme and port are
- * parsed from the base URL instead of assumed.
- */
-export function upstreamConnection(target: ProxyTarget): {
-  hostname: string;
-  port: number;
-  useHttps: boolean;
-} {
-  if (target.kind === "target") {
-    return { hostname: target.upstreamHost, port: 443, useHttps: true };
-  }
-  const url = new URL(target.upstreamBaseUrl);
-  const useHttps = url.protocol === "https:";
-  return {
-    hostname: url.hostname,
-    port: url.port ? Number(url.port) : useHttps ? 443 : 80,
-    useHttps,
-  };
-}
-
-/**
- * The path prefix a CustomTarget's base URL carries, if any — e.g.
- * "/zen/go" for https://opencode.ai/zen/go. Empty for a bare origin, and
- * always empty for a catalogue ResolvedTarget, which never carries one (see
- * upstreamHost). handle() prepends this to each request's own path so a
- * student-typed base URL with a path segment is not silently dropped —
- * without it, https://opencode.ai/zen/go would forward to
- * https://opencode.ai/v1/chat/completions instead of
- * https://opencode.ai/zen/go/v1/chat/completions, a 404.
- *
- * agents.ts already strips a trailing slash and collapses a bare "/" to ""
- * before this is stored, so plain concatenation against a leading-slash
- * request path never produces a doubled or missing slash — but the
- * stripping is repeated here too, since nothing stops a test or a future
- * caller from constructing a CustomTarget by hand with a trailing slash.
- */
-export function upstreamPathPrefix(target: ProxyTarget): string {
-  if (target.kind === "target") return "";
-  const { pathname } = new URL(target.upstreamBaseUrl);
-  return pathname === "/" ? "" : pathname.replace(/\/+$/, "");
-}
-
-/**
- * Headers forwarded upstream. We strip hop-by-hop headers, and we ask for an
- * uncompressed response so the capture is readable, then recompute the length
- * against the buffered body.
- *
- * We deliberately keep `content-encoding`. Some agents compress the request
- * body, and the upstream must receive those bytes exactly as the agent produced
- * them. Only the copy we write to disk is decoded.
- *
- * Auth headers pass through untouched so the real request still authenticates.
- */
-function forwardHeaders(
-  headers: http.IncomingHttpHeaders,
-  body: Buffer
-): http.OutgoingHttpHeaders {
-  const out: http.OutgoingHttpHeaders = { ...headers };
-  delete out["host"];
-  delete out["connection"];
-  delete out["accept-encoding"]; // force identity so we can read the stream
-  delete out["transfer-encoding"];
-  delete out["content-length"];
-  if (body.length > 0) out["content-length"] = String(body.length);
-  return out;
 }
 
 function handle(
@@ -199,7 +142,9 @@ function handle(
         res.writeHead(502, { "content-type": "application/json" });
       }
       res.end(
-        JSON.stringify({ error: `request-logger upstream error: ${err.message}` })
+        JSON.stringify({
+          error: `request-logger upstream error: ${err.message}`,
+        })
       );
     });
 
@@ -230,7 +175,9 @@ export function rejectUpgrade(req: http.IncomingMessage, socket: Duplex): void {
       `[request-logger] ${req.method ?? "GET"} ${req.url ?? "/"} tried a WebSocket upgrade -> 426 (forcing HTTP fallback)`
     )
   );
-  socket.end("HTTP/1.1 426 Upgrade Required\r\nConnection: close\r\nContent-Length: 0\r\n\r\n");
+  socket.end(
+    "HTTP/1.1 426 Upgrade Required\r\nConnection: close\r\nContent-Length: 0\r\n\r\n"
+  );
 }
 
 interface Capture {
@@ -244,70 +191,6 @@ interface Capture {
   requestBody: Buffer;
   requestEncoding?: string;
   responseRaw: string;
-}
-
-// ---------------------------------------------------------------------------
-// Retry-burst guard
-// ---------------------------------------------------------------------------
-
-/**
- * Tell a tight client-side retry loop apart from ordinary traffic, so one can
- * be throttled without touching the other.
- *
- * This exists because a wrong scheme or bad credentials against a
- * fast-failing endpoint can make an agent retry immediately and forever
- * instead of giving up on a 4xx — witnessed with OMP against
- * `http://api.anthropic.com` (should have been `https://`): Anthropic's edge
- * rejects plaintext HTTP in ~30ms with a 400 that carries none of the
- * `x-should-retry` guidance its real API responses do, and OMP's retry policy
- * reads the absence of that header as "retry", producing thousands of
- * identical requests within seconds. Every one of them is a real POST, so
- * `shouldLogRequest` alone cannot tell it apart from real traffic — this can.
- *
- * A well-behaved agent, and a human retrying by hand, never produce the same
- * method+path+status more than a handful of times in a couple of seconds. A
- * retry loop with no backoff does. Once a signature crosses BURST_THRESHOLD
- * inside BURST_WINDOW_MS, further repeats come back `suppressed`. A fresh
- * signature, or a gap wider than the window, restarts the count from zero —
- * this only ever fires on requests that are actually piling up fast.
- */
-export const BURST_THRESHOLD = 20;
-export const BURST_WINDOW_MS = 2_000;
-
-export interface BurstState {
-  key: string;
-  windowStart: number;
-  count: number;
-  warned: boolean;
-}
-
-export interface BurstResult {
-  state: BurstState;
-  suppressed: boolean;
-  /** True on the one call that crosses the threshold — print the warning here, not every time. */
-  justDetected: boolean;
-}
-
-export function burstKey(method: string, reqPath: string, statusCode: number): string {
-  return `${method} ${reqPath} ${statusCode}`;
-}
-
-export function trackBurst(
-  state: BurstState | null,
-  key: string,
-  now: number
-): BurstResult {
-  const fresh =
-    !state || state.key !== key || now - state.windowStart > BURST_WINDOW_MS;
-  const count = fresh ? 1 : state!.count + 1;
-  const windowStart = fresh ? now : state!.windowStart;
-  const wasWarned = fresh ? false : state!.warned;
-  const suppressed = count > BURST_THRESHOLD;
-  return {
-    state: { key, windowStart, count, warned: wasWarned || suppressed },
-    suppressed,
-    justDetected: suppressed && !wasWarned,
-  };
 }
 
 /** Module-level on purpose: one guard for the whole process, the same as LOG_DIR. */
@@ -364,8 +247,14 @@ function writeCapture(c: Capture): void {
     fs.mkdirSync(LOG_DIR, { recursive: true });
     // The raw file keeps the bytes exactly as they arrived, so the request can
     // still be replayed. Only the .md is decoded.
-    fs.writeFileSync(path.join(LOG_DIR, `${c.base}.request.txt`), c.requestBody);
-    fs.writeFileSync(path.join(LOG_DIR, `${c.base}.response.txt`), c.responseRaw);
+    fs.writeFileSync(
+      path.join(LOG_DIR, `${c.base}.request.txt`),
+      c.requestBody
+    );
+    fs.writeFileSync(
+      path.join(LOG_DIR, `${c.base}.response.txt`),
+      c.responseRaw
+    );
     fs.writeFileSync(
       path.join(LOG_DIR, `${c.base}.md`),
       renderMarkdown({
@@ -397,60 +286,6 @@ function writeCapture(c: Capture): void {
 // Startup
 // ---------------------------------------------------------------------------
 
-const dim = (text: string) => styleText("dim", text);
-const bold = (text: string) => styleText("bold", text);
-
-/** A field in the banner: a dim label, then the value it describes. */
-function field(label: string, value: string): void {
-  console.log(`  ${dim(label.padEnd(10))} ${value}`);
-}
-
-function printBanner(target: ProxyTarget): void {
-  const rule = dim("-".repeat(72));
-  const forwards =
-    target.kind === "target" ? `https://${target.upstreamHost}` : target.upstreamBaseUrl;
-  console.log("");
-  console.log(rule);
-  field("Agent", bold(`${target.agentLabel} (${target.providerLabel})`));
-  field("Listening", `http://localhost:${PORT}`);
-  field("Forwards", forwards);
-  field("Logs", dim(LOG_DIR));
-  console.log(rule);
-
-  for (const file of target.setup) {
-    console.log("");
-    console.log(`  Put this in ${bold(file.path)}:`);
-    console.log("");
-    for (const line of file.body.split("\n")) {
-      console.log(dim(`      ${line}`));
-    }
-  }
-
-  console.log("");
-  console.log(
-    target.setup.length > 0
-      ? "  Then run your agent in another terminal with:"
-      : "  Run your agent in another terminal with:"
-  );
-  console.log("");
-  console.log(`      ${bold(target.command)}`);
-  console.log("");
-
-  for (const note of target.notes) printWrapped("Note", note);
-  for (const warning of target.warnings) printWrapped("Warning", warning);
-
-  console.log(
-    dim("  Using a different agent now? Run: npm run request-logger -- --force")
-  );
-  // The tool waits on a port, so nothing tells the student it is finished.
-  // Say how to stop it here, where they are already reading.
-  // The styles are not nested. Both dim and bold close with the same code, so
-  // a bold word inside a dim string ends the dim early.
-  console.log(dim("  Press ") + bold("Ctrl+C") + dim(" to stop logging."));
-  console.log(rule);
-  console.log("");
-}
-
 /**
  * Ask the wizard, and keep the answer only if it is to be kept.
  *
@@ -475,7 +310,10 @@ async function main(): Promise<void> {
   let choice = force ? null : loadChoice(STATE_FILE);
   if (!choice) choice = await ask(!force);
 
-  let resolution = resolveChoice(choice, { port: PORT, platform: process.platform });
+  let resolution = resolveChoice(choice, {
+    port: PORT,
+    platform: process.platform,
+  });
 
   // A saved choice the catalogue no longer understands is not the student's
   // fault. Ask again rather than making them find the flag.
@@ -484,7 +322,10 @@ async function main(): Promise<void> {
     console.log(`[request-logger] ${resolution.message}`);
     // A saved file exists, so the student already asked to be remembered.
     choice = await ask(false);
-    resolution = resolveChoice(choice, { port: PORT, platform: process.platform });
+    resolution = resolveChoice(choice, {
+      port: PORT,
+      platform: process.platform,
+    });
   }
 
   if (resolution.kind === "error") {
@@ -522,7 +363,9 @@ async function main(): Promise<void> {
     const rule = dim("-".repeat(72));
     console.log("");
     console.log(rule);
-    console.log(`  ${bold(resolution.agentLabel)} cannot be logged by this tool.`);
+    console.log(
+      `  ${bold(resolution.agentLabel)} cannot be logged by this tool.`
+    );
     console.log(rule);
     console.log("");
     for (const line of wrap(resolution.reason, 68)) console.log(`  ${line}`);
@@ -535,7 +378,9 @@ async function main(): Promise<void> {
     );
     console.log(dim("  Only the first kind can ever be inspected."));
     console.log("");
-    console.log("  To follow the lesson, install one of the other agents, then run:");
+    console.log(
+      "  To follow the lesson, install one of the other agents, then run:"
+    );
     console.log("");
     console.log(`      ${bold("npm run request-logger")}`);
     console.log("");
@@ -546,39 +391,16 @@ async function main(): Promise<void> {
   const server = http.createServer((req, res) => handle(req, res, target));
   server.on("upgrade", rejectUpgrade);
   server.listen(PORT, () => {
-    printBanner(target);
+    printBanner(target, { port: PORT, logDir: LOG_DIR });
   });
-}
-
-/** Print a labelled paragraph, indented and wrapped. */
-function printWrapped(label: string, text: string): void {
-  const lines = wrap(text, 66);
-  console.log(`  ${bold(`${label}:`)} ${lines[0] ?? ""}`);
-  for (const line of lines.slice(1)) console.log(`        ${line}`);
-  console.log("");
-}
-
-/** Wrap prose to a width, so a long reason reads as a paragraph. */
-function wrap(text: string, width: number): string[] {
-  const lines: string[] = [];
-  let line = "";
-  for (const word of text.split(/\s+/)) {
-    if (line.length + word.length + 1 > width) {
-      lines.push(line);
-      line = word;
-    } else {
-      line = line ? `${line} ${word}` : word;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
 }
 
 // Only start the wizard and the server when this file is run directly (`npm
 // run request-logger`, or `tsx request-logger/proxy.ts`), not when it is
 // imported — the tests import pure functions like upstreamConnection from
 // this module, and must not trigger the interactive wizard by doing so.
-const isMain = path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url);
+const isMain =
+  path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url);
 if (isMain) {
   main().catch((err) => {
     console.error(`[request-logger] ${(err as Error).message}`);
