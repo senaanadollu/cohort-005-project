@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm";
+
 import { courses, purchases } from "~/db/schema";
-import { splitRevenue, type AnalyticsRange } from "~/lib/analytics";
+import { type AnalyticsRange, splitRevenue } from "~/lib/analytics";
 import { calendarDay, lastDayOfWindow } from "~/lib/refunds.server";
-import { purchaseScope, type Db } from "./scope";
+
+import { type Db, purchaseScope } from "./scope";
 
 // ─── Refund exposure ───
 // Gross revenue is reported the moment a purchase lands, but a purchase is

@@ -1,15 +1,16 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+
 import { createInstructorAnalytics } from "../index.server";
 import {
-  DAY_MS,
-  NOW,
   addCourse,
   addUser,
   asInstructor,
   buy,
   course,
+  DAY_MS,
   db,
   instructor,
+  NOW,
   setUpAnalyticsFixtures,
 } from "./fixtures";
 

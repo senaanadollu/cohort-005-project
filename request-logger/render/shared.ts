@@ -1,6 +1,6 @@
 import type { RendererId } from "../agents";
 
-export interface RenderInput {
+export type RenderInput = {
   /** Human label for the capture, e.g. "Claude Code" or "Pi (ChatGPT)". */
   agent: string;
   renderer: RendererId;
@@ -14,7 +14,7 @@ export interface RenderInput {
   /** The request's content-encoding header, if it had one. */
   requestEncoding?: string;
   responseRaw: string;
-}
+};
 
 // ---------------------------------------------------------------------------
 // Small helpers

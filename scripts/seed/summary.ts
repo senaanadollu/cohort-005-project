@@ -1,12 +1,13 @@
 import { eq, gte, isNotNull, isNull, sql } from "drizzle-orm";
+
+import * as schema from "../../app/db/schema";
 import {
   CourseStatus,
   LessonProgressStatus,
   UserRole,
 } from "../../app/db/schema";
-import * as schema from "../../app/db/schema";
-import { defaultNotifications } from "../../app/lib/notifications.server";
 import { syncAllUsers } from "../../app/lib/notification-preferences.server";
+import { defaultNotifications } from "../../app/lib/notifications.server";
 import { countRows, db } from "./database";
 import { daysAgo } from "./helpers";
 

@@ -3,7 +3,13 @@
 // sections read ids that earlier sections insert, and the generated history
 // consumes a seeded PRNG in a fixed sequence.
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+
 import { seedCategories } from "./seed/categories";
+import { seedDesignSystemsWithTailwind } from "./seed/courses/design-systems-with-tailwind";
+import { seedDockerAndKubernetes } from "./seed/courses/docker-and-kubernetes";
+import { seedIntroductionToTypescript } from "./seed/courses/introduction-to-typescript";
+import { seedPracticalDataVisualisation } from "./seed/courses/practical-data-visualisation";
+import { seedRestApisWithNodejs } from "./seed/courses/rest-apis-with-nodejs";
 import { db, dropAllTables, migrationsFolder } from "./seed/database";
 import { seedEnrollmentsAndRatings } from "./seed/enrollments-and-ratings";
 import { seedGeneratedHistory } from "./seed/generated-history";
@@ -20,11 +26,6 @@ import {
   flushWatchEvents,
   seedNarrativeWatchSessions,
 } from "./seed/watch-events";
-import { seedDesignSystemsWithTailwind } from "./seed/courses/design-systems-with-tailwind";
-import { seedDockerAndKubernetes } from "./seed/courses/docker-and-kubernetes";
-import { seedIntroductionToTypescript } from "./seed/courses/introduction-to-typescript";
-import { seedPracticalDataVisualisation } from "./seed/courses/practical-data-visualisation";
-import { seedRestApisWithNodejs } from "./seed/courses/rest-apis-with-nodejs";
 
 async function seed() {
   console.log("Seeding database...");

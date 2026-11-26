@@ -1,12 +1,14 @@
 import { and, eq } from "drizzle-orm";
-import { createTestDb, seedBaseData, type TestDb } from "~/test/setup";
+
 import * as schema from "~/db/schema";
 import { UserRole } from "~/db/schema";
-import { raiseRefundRequest } from "./refunds.server";
+import { createTestDb, seedBaseData, type TestDb } from "~/test/setup";
+
 import {
-  fakeNotifications,
   type FakeNotifications,
+  fakeNotifications,
 } from "./notifications.fake.server";
+import { raiseRefundRequest } from "./refunds.server";
 
 // Shared fixtures for the refunds.*.test.ts files. Call setupRefundScenario()
 // from a beforeEach: it builds a fresh database and the builders below

@@ -1,11 +1,13 @@
 import { and, count, countDistinct, eq, inArray } from "drizzle-orm";
+
 import {
-  LessonProgressStatus,
   enrollments,
   lessonProgress,
+  LessonProgressStatus,
   lessons,
   modules,
 } from "~/db/schema";
+
 import type { Db } from "./scope";
 
 // ─── Course progress ───

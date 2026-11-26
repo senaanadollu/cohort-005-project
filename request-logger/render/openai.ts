@@ -1,5 +1,5 @@
-import { blockText, fence, fenceJson, renderParams, sseData } from "./shared";
 import { renderMessages } from "./messages";
+import { blockText, fence, fenceJson, renderParams, sseData } from "./shared";
 
 // ---- OpenAI -----------------------------------------------------------------
 

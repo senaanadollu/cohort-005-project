@@ -3,6 +3,7 @@ import type {
   PreferenceSet,
   PreferenceSetChannelTypes,
 } from "@knocklabs/node/resources/recipients/preferences";
+
 import type { NotificationKind } from "~/lib/notification-feed";
 import {
   NOTIFICATION_CATEGORIES,

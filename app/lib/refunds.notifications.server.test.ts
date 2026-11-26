@@ -1,22 +1,23 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import type { TestDb, seedBaseData } from "~/test/setup";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import * as schema from "~/db/schema";
 import { UserRole } from "~/db/schema";
+import type { seedBaseData, TestDb } from "~/test/setup";
+
 import type { FakeNotifications } from "./notifications.fake.server";
+import {
+  addStudent,
+  buyForSelf,
+  buySeats,
+  NOW,
+  raise,
+  setupRefundScenario,
+} from "./refunds.fixtures.server";
 import {
   approveRefundRequest,
   declineRefundRequest,
   raiseRefundRequest,
 } from "./refunds.server";
-
-import {
-  NOW,
-  addStudent,
-  buyForSelf,
-  buySeats,
-  raise,
-  setupRefundScenario,
-} from "./refunds.fixtures.server";
 
 let db: TestDb;
 let base: ReturnType<typeof seedBaseData>;

@@ -1,5 +1,5 @@
-import { Link } from "react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router";
 
 type PagerLesson = { id: number; title: string };
 

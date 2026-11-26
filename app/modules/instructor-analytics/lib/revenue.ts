@@ -1,7 +1,9 @@
 import { count, eq, sql, sum } from "drizzle-orm";
+
 import { courses, purchases } from "~/db/schema";
-import { rangeStart, splitRevenue, type AnalyticsRange } from "~/lib/analytics";
-import { purchaseScope, type Db } from "./scope";
+import { type AnalyticsRange, rangeStart, splitRevenue } from "~/lib/analytics";
+
+import { type Db, purchaseScope } from "./scope";
 
 // ─── Revenue ───
 // What the viewer's courses earned in the range: in total, per course and

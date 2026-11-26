@@ -1,8 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, seedBaseData, type TestDb } from "~/test/setup";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
+
 import * as schema from "~/db/schema";
 import { setCurrentUserId } from "~/lib/session";
+import { createTestDb, seedBaseData, type TestDb } from "~/test/setup";
+
 import { createCoursePermissions } from "../course-permissions.server";
 import type { Person } from "../person.server";
 
@@ -142,7 +144,7 @@ function makeRequest(headers: Record<string, string> = {}) {
 /** Signs in through the real session cookie, as the DevUI panel does. */
 async function signedInRequest(userId: number, headerCountry?: string) {
   const setCookie = await setCurrentUserId(makeRequest(), userId);
-  const headers: Record<string, string> = { Cookie: setCookie.split(";")[0]! };
+  const headers: Record<string, string> = { Cookie: setCookie.split(";")[0] };
   if (headerCountry) headers["CF-IPCountry"] = headerCountry;
   return makeRequest(headers);
 }

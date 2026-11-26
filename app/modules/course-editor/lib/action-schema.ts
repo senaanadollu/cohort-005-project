@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { CourseStatus } from "~/db/schema";
 
 export const courseEditorActionSchema = z.discriminatedUnion("intent", [

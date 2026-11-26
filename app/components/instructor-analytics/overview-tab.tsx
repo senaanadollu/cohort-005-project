@@ -1,8 +1,10 @@
 import { Link } from "react-router";
-import { PLATFORM_FEE_PERCENT, formatMoney } from "~/lib/analytics";
+
+import { Card, CardContent } from "~/components/ui/card";
+import { formatMoney, PLATFORM_FEE_PERCENT } from "~/lib/analytics";
 import { REFUND_WINDOW_DAYS } from "~/lib/refund-rules";
 import type { InstructorAnalytics } from "~/modules/instructor-analytics/types";
-import { Card, CardContent } from "~/components/ui/card";
+
 import { RefundExposurePanel } from "./refund-exposure-panel";
 import { RevenueChart } from "./revenue-chart";
 import { MoneyCard, StatCard } from "./stat-cards";

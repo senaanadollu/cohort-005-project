@@ -1,10 +1,12 @@
+import { BookOpen, Clock, Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { BookOpen, Clock, Pencil } from "lucide-react";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { UserAvatar } from "~/components/user-avatar";
 import { formatDuration } from "~/lib/utils";
+
 import { EnrolledActions } from "./enrolled-actions";
 import type { CountryLockNotice, CourseDetailSummary } from "./types";
 

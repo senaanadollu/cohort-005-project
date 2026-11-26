@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useFetcher } from "react-router";
 import { toast } from "sonner";
+
 import { StarRatingInput } from "~/components/star-rating";
 
 export function RateCourse({ userRating }: { userRating: number | null }) {

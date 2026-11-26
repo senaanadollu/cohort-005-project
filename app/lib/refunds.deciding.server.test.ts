@@ -1,19 +1,14 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import { eq } from "drizzle-orm";
-import type { TestDb, seedBaseData } from "~/test/setup";
+import { beforeEach, describe, expect, it } from "vitest";
+
 import * as schema from "~/db/schema";
 import { LessonProgressStatus, RefundStatus } from "~/db/schema";
-import type { FakeNotifications } from "./notifications.fake.server";
-import {
-  approveRefundRequest,
-  checkRefundRequest,
-  declineRefundRequest,
-  getSeatAvailability,
-} from "./refunds.server";
+import type { seedBaseData, TestDb } from "~/test/setup";
+
 import { isBookmarked, toggleBookmark } from "./bookmarks.server";
 import { getNote, saveNote } from "./notes.server";
+import type { FakeNotifications } from "./notifications.fake.server";
 import {
-  NOW,
   addStudent,
   buyForSelf,
   buySeats,
@@ -21,9 +16,16 @@ import {
   daysBefore,
   getSeat,
   isEnrolled,
+  NOW,
   raise,
   setupRefundScenario,
 } from "./refunds.fixtures.server";
+import {
+  approveRefundRequest,
+  checkRefundRequest,
+  declineRefundRequest,
+  getSeatAvailability,
+} from "./refunds.server";
 
 let db: TestDb;
 let base: ReturnType<typeof seedBaseData>;

@@ -1,7 +1,9 @@
 import { and, count, eq, inArray, sql } from "drizzle-orm";
+
 import { lessons, modules, quizAttempts, quizzes } from "~/db/schema";
 import type { AnalyticsRange } from "~/lib/analytics";
-import { sinceRange, type Db } from "./scope";
+
+import { type Db, sinceRange } from "./scope";
 
 // ─── Quiz pass rates ───
 // How each of a selected course's quizzes is going, judged on every

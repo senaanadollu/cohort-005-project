@@ -1,12 +1,14 @@
 import { eq, or, sql } from "drizzle-orm";
+
 import {
-  courses,
   categories,
-  users,
-  modules,
-  lessons,
+  courses,
   enrollments,
+  lessons,
+  modules,
+  users,
 } from "~/db/schema";
+
 import type { Db } from "./db";
 
 export function getCourseWithDetails(database: Db, id: number) {
@@ -52,7 +54,7 @@ export function getCourseWithDetails(database: Db, id: number) {
       ? database
           .select()
           .from(lessons)
-          .where(or(...moduleIds.map((mid) => eq(lessons.moduleId, mid)))!)
+          .where(or(...moduleIds.map((mid) => eq(lessons.moduleId, mid))))
           .orderBy(lessons.position)
           .all()
       : [];
@@ -78,7 +80,7 @@ export function getLessonCountForCourse(database: Db, courseId: number) {
   const count = database
     .select({ count: sql<number>`count(*)` })
     .from(lessons)
-    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id)))!)
+    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id))))
     .get();
 
   return count?.count ?? 0;

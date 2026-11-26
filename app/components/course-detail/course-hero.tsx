@@ -1,10 +1,12 @@
-import { Link } from "react-router";
 import { BookOpen, Clock, Pencil } from "lucide-react";
-import { Button } from "~/components/ui/button";
+import { Link } from "react-router";
+
 import { CourseImage } from "~/components/course-image";
 import { StarRating } from "~/components/star-rating";
+import { Button } from "~/components/ui/button";
 import { UserAvatar } from "~/components/user-avatar";
 import { formatDuration } from "~/lib/utils";
+
 import type { CourseDetailSummary } from "./types";
 
 /** Cover image, title, rating and headline facts at the top of the page. */

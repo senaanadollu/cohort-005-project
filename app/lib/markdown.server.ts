@@ -1,5 +1,6 @@
 import { marked, Renderer } from "marked";
-import { type Highlighter, createHighlighter } from "shiki";
+import { createHighlighter, type Highlighter } from "shiki";
+
 import type { Markdown } from "~/lib/text";
 
 let highlighter: Highlighter | null = null;
@@ -49,5 +50,5 @@ export async function renderMarkdown(markdown: Markdown): Promise<string> {
     }
   };
 
-  return marked.parse(markdown, { renderer }) as string;
+  return marked.parse(markdown, { renderer });
 }

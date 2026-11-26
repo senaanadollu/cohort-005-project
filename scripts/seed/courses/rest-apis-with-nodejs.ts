@@ -1,9 +1,9 @@
-import { CourseStatus } from "../../../app/db/schema";
 import * as schema from "../../../app/db/schema";
+import { CourseStatus } from "../../../app/db/schema";
 import { markdown } from "../../../app/lib/text";
+import { insertCourseContent } from "../course-content";
 import { db } from "../database";
 import { daysAgo } from "../helpers";
-import { insertCourseContent } from "../course-content";
 import type { SeedCategory, SeedUser } from "../types";
 
 export function seedRestApisWithNodejs(

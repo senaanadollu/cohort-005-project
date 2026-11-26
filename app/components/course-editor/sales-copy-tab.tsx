@@ -1,7 +1,8 @@
 import { Save } from "lucide-react";
+
 import { MonacoMarkdownEditor } from "~/components/monaco-markdown-editor";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
 
 /**
  * The Sales Copy tab. The draft lives in the page, not here, so it survives

@@ -1,35 +1,36 @@
-import { NavLink, Form } from "react-router";
-import { useState, useEffect } from "react";
-import { cn } from "~/lib/utils";
-import { UserRole } from "~/db/schema";
-import { UserAvatar } from "~/components/user-avatar";
-import { NotificationBell } from "~/components/notification-feed";
 import {
   Bookmark,
   BookOpen,
   ChartColumn,
-  LayoutDashboard,
   GraduationCap,
+  LayoutDashboard,
+  LogOut,
   MessageSquare,
-  Shield,
-  Tag,
+  Moon,
   Receipt,
+  Settings,
+  Shield,
+  Sun,
+  Tag,
   Users,
   UsersRound,
-  Moon,
-  Sun,
-  LogOut,
-  Settings,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Form, NavLink } from "react-router";
 
-interface CurrentUser {
+import { NotificationBell } from "~/components/notification-feed";
+import { UserAvatar } from "~/components/user-avatar";
+import { UserRole } from "~/db/schema";
+import { cn } from "~/lib/utils";
+
+type CurrentUser = {
   id: number;
   name: string;
   role: UserRole;
   avatarUrl: string | null;
-}
+};
 
-interface RecentCourse {
+type RecentCourse = {
   courseId: number;
   title: string;
   slug: string;
@@ -37,20 +38,20 @@ interface RecentCourse {
   completedLessons: number;
   totalLessons: number;
   progress: number;
-}
+};
 
-interface SidebarProps {
+type SidebarProps = {
   currentUser: CurrentUser | null;
   recentCourses?: RecentCourse[];
   isTeamAdmin?: boolean;
-}
+};
 
-interface NavItem {
+type NavItem = {
   label: string;
   to: string;
   icon: React.ReactNode;
   roles: UserRole[] | "all";
-}
+};
 
 const navItems: NavItem[] = [
   {

@@ -1,9 +1,9 @@
-import type { Db } from "./db";
 import {
   getCourseWithDetails,
   getEnrollmentCountForCourse,
   getLessonCountForCourse,
 } from "./course-details";
+import type { Db } from "./db";
 import { getStudentRoster } from "./student-roster";
 
 /**

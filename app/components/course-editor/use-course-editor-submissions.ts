@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import type { DropResult } from "@hello-pangea/dnd";
+import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 import { toast } from "sonner";
-import type { DropResult } from "@hello-pangea/dnd";
+
 import type { EditorCourse } from "./types";
 
 /**

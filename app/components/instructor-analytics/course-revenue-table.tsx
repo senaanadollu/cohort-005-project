@@ -1,4 +1,4 @@
-import { PLATFORM_FEE_PERCENT, formatMoney } from "~/lib/analytics";
+import { formatMoney, PLATFORM_FEE_PERCENT } from "~/lib/analytics";
 import type { InstructorAnalytics } from "~/modules/instructor-analytics/types";
 
 export function CourseRevenueTable({

@@ -1,12 +1,13 @@
+import { and, desc, eq } from "drizzle-orm";
+
 import { db } from "~/db";
 import {
-  quizzes,
-  quizQuestions,
-  quizOptions,
-  quizAttempts,
   quizAnswers,
+  quizAttempts,
+  quizOptions,
+  quizQuestions,
+  quizzes,
 } from "~/db/schema";
-import { and, desc, eq } from "drizzle-orm";
 
 export function getQuizById(quizId: number) {
   return db.select().from(quizzes).where(eq(quizzes.id, quizId)).get();
@@ -84,7 +85,7 @@ export function computeResult(
       .all();
 
     let correct = 0;
-    let total = questions.length;
+    const total = questions.length;
     const questionResults: any[] = [];
 
     for (let i = 0; i < questions.length; i++) {

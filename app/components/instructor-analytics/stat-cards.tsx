@@ -1,5 +1,5 @@
-import { formatMoney } from "~/lib/analytics";
 import { Card, CardContent } from "~/components/ui/card";
+import { formatMoney } from "~/lib/analytics";
 
 export function MoneyCard({
   label,

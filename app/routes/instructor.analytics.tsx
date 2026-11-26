@@ -1,8 +1,6 @@
-import { Link, isRouteErrorResponse, useSearchParams } from "react-router";
-import type { Route } from "./+types/instructor.analytics";
-import { people } from "~/modules/permissions/person.server";
-import { ANALYTICS_RANGES } from "~/lib/analytics";
-import { instructorAnalytics } from "~/modules/instructor-analytics/index.server";
+import { AlertTriangle, Rocket } from "lucide-react";
+import { isRouteErrorResponse, Link, useSearchParams } from "react-router";
+
 import { CourseTab } from "~/components/instructor-analytics/course-tab";
 import { OverviewTab } from "~/components/instructor-analytics/overview-tab";
 import { Button } from "~/components/ui/button";
@@ -15,8 +13,12 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Skeleton } from "~/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "~/components/ui/tabs";
-import { AlertTriangle, Rocket } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { ANALYTICS_RANGES } from "~/lib/analytics";
+import { instructorAnalytics } from "~/modules/instructor-analytics/index.server";
+import { people } from "~/modules/permissions/person.server";
+
+import type { Route } from "./+types/instructor.analytics";
 
 // ─── Instructor Analytics ───
 // What an instructor earned, and when. Three money figures rather than one:

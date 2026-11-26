@@ -1,5 +1,5 @@
-import { LessonProgressStatus } from "../../app/db/schema";
 import * as schema from "../../app/db/schema";
+import { LessonProgressStatus } from "../../app/db/schema";
 import { countRows, db } from "./database";
 import { daysAgo } from "./helpers";
 import type { SeedUser } from "./types";

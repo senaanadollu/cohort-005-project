@@ -1,5 +1,6 @@
-import { useFetcher } from "react-router";
 import { Bookmark, BookmarkCheck } from "lucide-react";
+import { useFetcher } from "react-router";
+
 import { Button } from "~/components/ui/button";
 
 export function BookmarkToggle({ bookmarked }: { bookmarked: boolean }) {

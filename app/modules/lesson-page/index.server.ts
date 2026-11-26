@@ -1,5 +1,5 @@
-import { loadLessonPage } from "./lib/load-lesson-page";
 import { handleLessonAction } from "./lib/lesson-action";
+import { loadLessonPage } from "./lib/load-lesson-page";
 
 /**
  * The lesson page: everything the lesson route loads and every intent it

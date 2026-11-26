@@ -1,5 +1,5 @@
-import { fenceJson, renderParams, sseData } from "./shared";
 import { renderMessages } from "./messages";
+import { fenceJson, renderParams, sseData } from "./shared";
 
 // ---- Gemini -----------------------------------------------------------------
 //

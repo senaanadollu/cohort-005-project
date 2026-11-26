@@ -1,5 +1,5 @@
-import { LessonProgressStatus, RefundStatus } from "../../app/db/schema";
 import * as schema from "../../app/db/schema";
+import { LessonProgressStatus, RefundStatus } from "../../app/db/schema";
 import { db } from "./database";
 import { daysAgo } from "./helpers";
 import type { SeedCourse, StudentByEmail } from "./types";

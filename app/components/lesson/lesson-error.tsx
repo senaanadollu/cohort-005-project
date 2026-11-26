@@ -1,5 +1,6 @@
-import { Link, isRouteErrorResponse } from "react-router";
 import { AlertTriangle } from "lucide-react";
+import { isRouteErrorResponse, Link } from "react-router";
+
 import { Button } from "~/components/ui/button";
 
 export function LessonError({ error }: { error: unknown }) {

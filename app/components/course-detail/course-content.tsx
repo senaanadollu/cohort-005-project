@@ -1,8 +1,10 @@
-import { Link } from "react-router";
 import { CheckCircle2, Circle, Clock, Pencil, PlayCircle } from "lucide-react";
+import { Link } from "react-router";
+
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { LessonProgressStatus } from "~/db/schema";
 import { formatDuration } from "~/lib/utils";
+
 import type { CourseContentCourse } from "./types";
 
 export function CourseContent({

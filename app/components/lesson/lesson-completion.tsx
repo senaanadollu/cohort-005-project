@@ -1,5 +1,6 @@
-import { Link, type useFetcher } from "react-router";
 import { CheckCircle2, ChevronRight } from "lucide-react";
+import { Link, type useFetcher } from "react-router";
+
 import { Button } from "~/components/ui/button";
 
 /** Mark Complete / Up Next, for an enrolled Student. */

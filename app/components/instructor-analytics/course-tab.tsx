@@ -1,4 +1,3 @@
-import type { InstructorAnalytics } from "~/modules/instructor-analytics/types";
 import { Card, CardContent } from "~/components/ui/card";
 import {
   Select,
@@ -7,6 +6,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import type { InstructorAnalytics } from "~/modules/instructor-analytics/types";
+
 import { CourseProgress } from "./course-progress";
 import { CourseRevenueTable } from "./course-revenue-table";
 import { DropOffFunnel } from "./drop-off-funnel";

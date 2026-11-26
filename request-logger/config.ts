@@ -20,8 +20,10 @@
 
 import fs from "node:fs";
 import { styleText } from "node:util";
-import { cancel, confirm, isCancel, intro, select, text } from "@clack/prompts";
+import { cancel, confirm, intro, isCancel, select, text } from "@clack/prompts";
+
 import {
+  type AgentChoice,
   agentProviders,
   CUSTOM_ID,
   CUSTOM_LABEL,
@@ -29,19 +31,18 @@ import {
   listAgents,
   OTHER_ID,
   OTHER_LABEL,
-  WIRE_FORMAT_OPTIONS,
-  type AgentChoice,
   type RendererId,
+  WIRE_FORMAT_OPTIONS,
 } from "./agents";
 import { discoverModelIds } from "./model-discovery";
 
-export interface WizardAnswer {
+export type WizardAnswer = {
   choice: AgentChoice;
   /** True only when the choice is to be kept. */
   remember: boolean;
-}
+};
 
-export interface AskOptions {
+export type AskOptions = {
   /**
    * Whether to ask if the answer should be kept.
    *
@@ -50,7 +51,7 @@ export interface AskOptions {
    * only make them say yes twice.
    */
   offerToRemember: boolean;
-}
+};
 
 export function loadChoice(file: string): AgentChoice | null {
   try {
@@ -115,7 +116,7 @@ function stopIfCancelled<T>(value: T | symbol): T {
     cancel("No problem. Nothing was started.");
     process.exit(0);
   }
-  return value as T;
+  return value;
 }
 
 /**

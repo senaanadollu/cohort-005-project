@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
+import { describe, expect, it } from "vitest";
+
 import { CUSTOM_ID, resolveChoice } from "../agents";
-import { PORT, target, customTarget } from "./test-helpers";
+import { customTarget, PORT, target } from "./test-helpers";
 
 describe("resolveChoice — custom base URL, per-agent command template", () => {
   it("builds a one-run OpenCode provider config for the OpenAI-compatible route", () => {

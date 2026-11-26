@@ -2,17 +2,17 @@
  * The catalogue itself: one entry per agent, each in its own file under
  * ./catalogue/. This file only fixes the order.
  */
-import type { AgentEntry } from "./types";
+import { ANTIGRAVITY } from "./catalogue/antigravity";
 import { CLAUDE_CODE } from "./catalogue/claude-code";
 import { CODEX } from "./catalogue/codex";
 import { COPILOT } from "./catalogue/copilot";
-import { AMP, CURSOR } from "./catalogue/refused";
+import { GEMINI } from "./catalogue/gemini";
+import { JUNIE } from "./catalogue/junie";
+import { OMP } from "./catalogue/omp";
 import { OPENCODE } from "./catalogue/opencode";
 import { PI } from "./catalogue/pi";
-import { OMP } from "./catalogue/omp";
-import { GEMINI } from "./catalogue/gemini";
-import { ANTIGRAVITY } from "./catalogue/antigravity";
-import { JUNIE } from "./catalogue/junie";
+import { AMP, CURSOR } from "./catalogue/refused";
+import type { AgentEntry } from "./types";
 
 /**
  * Ordered by popularity, decided 2026-08-06. The wizard shows them in this

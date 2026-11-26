@@ -1,28 +1,29 @@
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
+
 import {
   coupons,
   courses,
   enrollments,
   refunds,
-  users,
   RefundStatus,
+  users,
 } from "~/db/schema";
-import { formatPrice } from "~/lib/utils";
 import {
+  type Notifications,
   sendSafely,
   toNotificationPerson,
-  type Notifications,
 } from "~/lib/notifications.server";
 import type { Failure } from "~/lib/refund-eligibility.server";
 import {
+  type Db,
   getPurchase,
   getSeats,
   isClaimed,
   kindOf,
-  type Db,
   type Purchase,
   type Queryable,
 } from "~/lib/refund-purchases.server";
+import { formatPrice } from "~/lib/utils";
 
 export type Email = { to: string; subject: string; body: string };
 

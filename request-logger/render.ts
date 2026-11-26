@@ -16,14 +16,14 @@
  */
 
 import type { RendererId } from "./agents";
-import { decodeRequestBody } from "./render/body";
-import { fence, fenceJson, sseData, type RenderInput } from "./render/shared";
 import {
   renderAnthropicRequest,
   renderAnthropicResponse,
 } from "./render/anthropic";
+import { decodeRequestBody } from "./render/body";
 import { renderGeminiRequest, renderGeminiResponse } from "./render/gemini";
 import { renderOpenAIRequest, renderOpenAIResponse } from "./render/openai";
+import { fence, fenceJson, type RenderInput, sseData } from "./render/shared";
 
 export { decodeRequestBody };
 

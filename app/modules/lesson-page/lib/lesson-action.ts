@@ -1,12 +1,14 @@
 import { data } from "react-router";
-import {
-  coursePermissions,
-  type Capability,
-} from "~/modules/permissions/course-permissions.server";
+
 import { db } from "~/db";
 import { toggleBookmark } from "~/lib/bookmarks.server";
 import { saveNote } from "~/lib/notes.server";
 import { parseFormData } from "~/lib/validation";
+import {
+  type Capability,
+  coursePermissions,
+} from "~/modules/permissions/course-permissions.server";
+
 import { handleCommentIntent } from "./comment-intents";
 import { lessonRef } from "./lesson-ref";
 import { markLessonComplete } from "./progress";

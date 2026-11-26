@@ -1,25 +1,27 @@
-import { Link } from "react-router";
 import {
   DragDropContext,
-  Droppable,
   Draggable,
+  Droppable,
   type DropResult,
 } from "@hello-pangea/dnd";
 import { BookOpen, Clock, Eye, FileEdit, GripVertical } from "lucide-react";
-import { formatDuration } from "~/lib/utils";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { Link } from "react-router";
+
 import { Button } from "~/components/ui/button";
-import type { EditorCourse } from "./types";
-import {
-  AddModuleForm,
-  DeleteModuleButton,
-  InlineEditableModuleTitle,
-} from "./module-controls";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { formatDuration } from "~/lib/utils";
+
 import {
   AddLessonForm,
   DeleteLessonButton,
   InlineEditableLessonTitle,
 } from "./lesson-controls";
+import {
+  AddModuleForm,
+  DeleteModuleButton,
+  InlineEditableModuleTitle,
+} from "./module-controls";
+import type { EditorCourse } from "./types";
 
 /** The Content tab: modules and their lessons, reorderable by drag and drop. */
 export function CurriculumTab({

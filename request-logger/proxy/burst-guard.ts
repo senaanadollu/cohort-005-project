@@ -27,19 +27,19 @@
 export const BURST_THRESHOLD = 20;
 export const BURST_WINDOW_MS = 2_000;
 
-export interface BurstState {
+export type BurstState = {
   key: string;
   windowStart: number;
   count: number;
   warned: boolean;
-}
+};
 
-export interface BurstResult {
+export type BurstResult = {
   state: BurstState;
   suppressed: boolean;
   /** True on the one call that crosses the threshold — print the warning here, not every time. */
   justDetected: boolean;
-}
+};
 
 export function burstKey(
   method: string,
@@ -56,9 +56,9 @@ export function trackBurst(
 ): BurstResult {
   const fresh =
     !state || state.key !== key || now - state.windowStart > BURST_WINDOW_MS;
-  const count = fresh ? 1 : state!.count + 1;
-  const windowStart = fresh ? now : state!.windowStart;
-  const wasWarned = fresh ? false : state!.warned;
+  const count = fresh ? 1 : state.count + 1;
+  const windowStart = fresh ? now : state.windowStart;
+  const wasWarned = fresh ? false : state.warned;
   const suppressed = count > BURST_THRESHOLD;
   return {
     state: { key, windowStart, count, warned: wasWarned || suppressed },

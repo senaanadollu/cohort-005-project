@@ -13,12 +13,13 @@ import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+
 import * as schema from "../app/db/schema";
-import { defaultNotifications } from "../app/lib/notifications.server";
 import {
   syncAllUsers,
   syncUser,
 } from "../app/lib/notification-preferences.server";
+import { defaultNotifications } from "../app/lib/notifications.server";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const envFile = path.join(root, ".env");

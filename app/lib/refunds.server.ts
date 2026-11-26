@@ -1,38 +1,39 @@
 import { asc, desc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
+
 import {
   courses,
   purchases,
   refunds,
-  users,
   RefundStatus,
   UserRole,
+  users,
 } from "~/db/schema";
-import { formatPrice } from "~/lib/utils";
 import {
+  type Notifications,
   sendSafely,
   toNotificationPerson,
-  type Notifications,
 } from "~/lib/notifications.server";
-import type { RuleBreak } from "~/lib/refund-rules";
 import { lastDayOfWindow } from "~/lib/refund-calendar";
+import type { Email } from "~/lib/refund-decisions.server";
 import {
   checkRefundRequest,
+  type Failure,
   findRuleBreaks,
   getRefundFigures,
-  type Failure,
   type RefundFigures,
 } from "~/lib/refund-eligibility.server";
 import {
+  type Db,
   getNewestIndividualPurchase,
   getSeats,
   isClaimed,
   kindOf,
-  type Db,
   type PurchaseKind,
   type Queryable,
 } from "~/lib/refund-purchases.server";
-import type { Email } from "~/lib/refund-decisions.server";
+import type { RuleBreak } from "~/lib/refund-rules";
+import { formatPrice } from "~/lib/utils";
 
 // docs/adr/0001–0004 explain why Refunds work the way they do.
 

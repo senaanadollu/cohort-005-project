@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+
 import { resolveChoice } from "../agents";
-import { PORT, target, customTarget } from "./test-helpers";
+import { customTarget, PORT, target } from "./test-helpers";
 
 describe("resolveChoice — OMP", () => {
   it("resolves OMP straight from a base URL and wire format, with no provider needed", () => {

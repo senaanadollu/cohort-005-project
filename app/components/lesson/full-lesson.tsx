@@ -1,13 +1,15 @@
+import { Clock, Github } from "lucide-react";
 import { useEffect } from "react";
 import { useFetcher, useNavigate } from "react-router";
-import { Clock, Github } from "lucide-react";
-import type { FullLessonData } from "~/modules/lesson-page/index.server";
-import { LessonProgressStatus } from "~/db/schema";
+
 import { CommentThread } from "~/components/comment-thread";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { YouTubePlayer } from "~/components/youtube-player";
+import { LessonProgressStatus } from "~/db/schema";
 import { formatDuration } from "~/lib/utils";
+import type { FullLessonData } from "~/modules/lesson-page/index.server";
+
 import { BookmarkToggle } from "./bookmark-toggle";
 import { CurriculumSidebar } from "./curriculum-sidebar";
 import { LessonBreadcrumb } from "./lesson-breadcrumb";

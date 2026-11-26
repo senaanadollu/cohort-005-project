@@ -1,8 +1,9 @@
-import type { Route } from "./+types/courses.$slug.lessons.$lessonId";
-import { lessonPage } from "~/modules/lesson-page/index.server";
 import { FullLesson } from "~/components/lesson/full-lesson";
 import { LessonError } from "~/components/lesson/lesson-error";
 import { LockedLesson } from "~/components/lesson/locked-lesson";
+import { lessonPage } from "~/modules/lesson-page/index.server";
+
+import type { Route } from "./+types/courses.$slug.lessons.$lessonId";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   const title = loaderData?.lesson?.title ?? "Lesson";

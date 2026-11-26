@@ -5,8 +5,10 @@ import {
   Trophy,
   XCircle,
 } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+
 import type { LessonQuiz, QuizResult } from "./quiz-types";
 
 export function QuizResults({

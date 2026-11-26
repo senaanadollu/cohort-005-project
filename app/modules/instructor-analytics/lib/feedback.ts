@@ -1,16 +1,18 @@
 import { and, count, eq, isNull, ne, notExists, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
+
 import {
-  UserRole,
   comments,
   courseRatings,
   courses,
   lessons,
   modules,
+  UserRole,
   users,
 } from "~/db/schema";
-import { rangeStart, type AnalyticsRange } from "~/lib/analytics";
-import { scopeOn, type Db } from "./scope";
+import { type AnalyticsRange, rangeStart } from "~/lib/analytics";
+
+import { type Db, scopeOn } from "./scope";
 
 // ─── Feedback ───
 // What students say back: the ratings they leave and the questions they ask.

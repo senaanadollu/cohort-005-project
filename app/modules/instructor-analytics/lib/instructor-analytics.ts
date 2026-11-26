@@ -1,6 +1,8 @@
 import { and, countDistinct, eq } from "drizzle-orm";
-import { CourseStatus, courses, purchases, users } from "~/db/schema";
+
+import { courses, CourseStatus, purchases, users } from "~/db/schema";
 import { parseAnalyticsRange } from "~/lib/analytics";
+
 import { getStudentRevenue, getTopBuyers } from "./audience";
 import { getCourseRevenueByCountry } from "./country-revenue";
 import { getCourseDropOff, getCourseProgressSummary } from "./course-progress";
@@ -12,7 +14,7 @@ import {
   getRevenueOverTime,
   getRevenueSummary,
 } from "./revenue";
-import { ownedBy, parseId, purchaseScope, type Db } from "./scope";
+import { type Db, ownedBy, parseId, purchaseScope } from "./scope";
 
 // ─── Instructor Analytics ───
 // Everything the instructor analytics page shows, computed in one call from

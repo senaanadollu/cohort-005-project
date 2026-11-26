@@ -1,6 +1,7 @@
 import { data } from "react-router";
+
 import { parseFormData } from "~/lib/validation";
-import type { Db } from "./db";
+
 import { courseEditorActionSchema } from "./action-schema";
 import {
   updateCourse,
@@ -22,6 +23,7 @@ import {
   updateLessonTitle,
   updateModuleTitle,
 } from "./curriculum";
+import type { Db } from "./db";
 
 /** The course being edited, as the permission check resolved it. */
 export type EditedCourse = { id: number; title: string; description: string };

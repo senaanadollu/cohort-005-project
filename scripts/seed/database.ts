@@ -1,10 +1,11 @@
 import Database from "better-sqlite3";
-import { sql, type SQL } from "drizzle-orm";
+import { type SQL, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+
 import * as schema from "../../app/db/schema";
 
 const __filename = fileURLToPath(import.meta.url);

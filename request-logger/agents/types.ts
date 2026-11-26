@@ -9,7 +9,7 @@ export type RendererId = "anthropic" | "openai" | "gemini" | "raw";
  * except the custom target fields, which are the one documented exception.
  * See config.ts.
  */
-export interface AgentChoice {
+export type AgentChoice = {
   agent: string;
   provider?: string;
   /** Only set when provider is CUSTOM_ID: the base URL the student typed. */
@@ -22,9 +22,9 @@ export interface AgentChoice {
    * routes (see resolveCustomTarget).
    */
   customModel?: string;
-}
+};
 
-export interface ResolvedTarget {
+export type ResolvedTarget = {
   kind: "target";
   agent: string;
   agentLabel: string;
@@ -43,7 +43,7 @@ export interface ResolvedTarget {
   notes: string[];
   /** Things that will otherwise look like the tool is broken. */
   warnings: string[];
-}
+};
 
 /**
  * Resolved to a target the catalogue has no entry for: the student typed
@@ -52,7 +52,7 @@ export interface ResolvedTarget {
  * everywhere downstream — the proxy routes to it and renders it exactly the
  * same way — so the two are only ever told apart by `kind`.
  */
-export interface CustomTarget {
+export type CustomTarget = {
   kind: "custom-target";
   agent: string;
   agentLabel: string;
@@ -71,19 +71,19 @@ export interface CustomTarget {
   setup: SetupFile[];
   notes: string[];
   warnings: string[];
-}
+};
 
-export interface AgentRefusal {
+export type AgentRefusal = {
   kind: "refusal";
   agent: string;
   agentLabel: string;
   reason: string;
-}
+};
 
-export interface ResolveError {
+export type ResolveError = {
   kind: "error";
   message: string;
-}
+};
 
 /**
  * The student's setup is not in the catalogue, and they said so.
@@ -92,13 +92,13 @@ export interface ResolveError {
  * list of what is possible, so the only useful answer is to ask for the missing
  * entry. It is never saved.
  */
-export interface SetupRequest {
+export type SetupRequest = {
   kind: "request";
   /** The agent, when the student named one the catalogue knows. */
   agentLabel: string | null;
   /** Where to ask for the missing entry. */
   url: string;
-}
+};
 
 export type Resolution =
   ResolvedTarget | CustomTarget | AgentRefusal | ResolveError | SetupRequest;
@@ -138,13 +138,13 @@ export const WIRE_FORMAT_OPTIONS: Array<{ id: RendererId; label: string }> = [
   { id: "raw", label: "Not sure — show me the raw JSON" },
 ];
 
-export interface SetupFile {
+export type SetupFile = {
   path: string;
   body: string;
   language: string;
-}
+};
 
-export interface ProviderEntry {
+export type ProviderEntry = {
   id: string;
   label: string;
   upstreamHost: string;
@@ -174,9 +174,9 @@ export interface ProviderEntry {
    * would silently misconfigure it rather than help.
    */
   customTemplateFor?: RendererId[];
-}
+};
 
-export interface AgentEntry {
+export type AgentEntry = {
   id: string;
   label: string;
   /** A supported agent has providers. A refused one has a reason. */
@@ -191,4 +191,4 @@ export interface AgentEntry {
    * right for it.
    */
   alwaysCustom?: boolean;
-}
+};

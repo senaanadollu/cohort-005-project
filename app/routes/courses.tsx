@@ -1,41 +1,43 @@
+import { and, eq, inArray, like, or, sql } from "drizzle-orm";
+import { AlertTriangle, BookOpen, Search } from "lucide-react";
 import {
   Form,
-  Link,
-  useSearchParams,
-  useNavigation,
   isRouteErrorResponse,
+  Link,
+  useNavigation,
+  useSearchParams,
 } from "react-router";
-import type { Route } from "./+types/courses";
-import { db } from "~/db";
-import {
-  courses as coursesTable,
-  categories as categoriesTable,
-  users,
-  modules,
-  lessons,
-  enrollments as enrollmentsTable,
-  lessonProgress,
-  courseRatings,
-  CourseStatus,
-  LessonProgressStatus,
-} from "~/db/schema";
-import { eq, like, and, or, sql, inArray } from "drizzle-orm";
+
+import { CourseImage } from "~/components/course-image";
+import { StarRating } from "~/components/star-rating";
+import { Button } from "~/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
-import { AlertTriangle, BookOpen, Search } from "lucide-react";
-import { CourseImage } from "~/components/course-image";
 import { UserAvatar } from "~/components/user-avatar";
-import { getCurrentUserId } from "~/lib/session";
-import { formatPrice } from "~/lib/utils";
+import { db } from "~/db";
+import {
+  categories as categoriesTable,
+  courseRatings,
+  courses as coursesTable,
+  CourseStatus,
+  enrollments as enrollmentsTable,
+  lessonProgress,
+  LessonProgressStatus,
+  lessons,
+  modules,
+  users,
+} from "~/db/schema";
 import { resolveCountry } from "~/lib/country.server";
 import { calculatePppPrice } from "~/lib/ppp";
-import { StarRating } from "~/components/star-rating";
+import { getCurrentUserId } from "~/lib/session";
+import { formatPrice } from "~/lib/utils";
+
+import type { Route } from "./+types/courses";
 
 function buildCourseQuery(
   search: string | null,
@@ -113,7 +115,7 @@ function getLessonCountForCourse(courseId: number) {
   const count = db
     .select({ count: sql<number>`count(*)` })
     .from(lessons)
-    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id)))!)
+    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id))))
     .get();
 
   return count?.count ?? 0;
@@ -153,7 +155,7 @@ function getCourseLessonIds(courseId: number): number[] {
   const courseLessons = db
     .select({ id: lessons.id })
     .from(lessons)
-    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id)))!)
+    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id))))
     .all();
 
   return courseLessons.map((l) => l.id);
@@ -175,7 +177,7 @@ function calculateProgress(
         durationMinutes: lessons.durationMinutes,
       })
       .from(lessons)
-      .where(or(...lessonIds.map((id) => eq(lessons.id, id)))!)
+      .where(or(...lessonIds.map((id) => eq(lessons.id, id))))
       .all();
 
     const totalDuration = courseLessons.reduce(
@@ -192,7 +194,7 @@ function calculateProgress(
         and(
           eq(lessonProgress.userId, userId),
           eq(lessonProgress.status, LessonProgressStatus.Completed),
-          or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))!
+          or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))
         )
       )
       .all();
@@ -213,7 +215,7 @@ function calculateProgress(
       and(
         eq(lessonProgress.userId, userId),
         eq(lessonProgress.status, LessonProgressStatus.Completed),
-        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))!
+        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))
       )
     )
     .get();
@@ -232,7 +234,7 @@ function getCompletedLessonCount(userId: number, courseId: number) {
       and(
         eq(lessonProgress.userId, userId),
         eq(lessonProgress.status, LessonProgressStatus.Completed),
-        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))!
+        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))
       )
     )
     .get();

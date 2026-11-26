@@ -1,7 +1,9 @@
-import { Link } from "react-router";
 import { PlayCircle, ShieldAlert, Users } from "lucide-react";
+import { Link } from "react-router";
+
 import { Button } from "~/components/ui/button";
 import { countryName } from "~/lib/ppp";
+
 import { RateCourse } from "./rate-course";
 import { RequestRefund } from "./request-refund";
 import type { CountryLockNotice, CourseDetailModule } from "./types";

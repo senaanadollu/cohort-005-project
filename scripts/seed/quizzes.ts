@@ -1,5 +1,5 @@
-import { QuestionType } from "../../app/db/schema";
 import * as schema from "../../app/db/schema";
+import { QuestionType } from "../../app/db/schema";
 import { countRows, db } from "./database";
 
 export function seedQuizzes(

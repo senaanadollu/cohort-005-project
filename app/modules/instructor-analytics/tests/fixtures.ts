@@ -1,11 +1,13 @@
 import { eq } from "drizzle-orm";
-import { createTestDb, seedBaseData, type TestDb } from "~/test/setup";
+
 import * as schema from "~/db/schema";
 import { CourseStatus, LessonProgressStatus, UserRole } from "~/db/schema";
 import { markdown } from "~/lib/text";
+import { createTestDb, seedBaseData, type TestDb } from "~/test/setup";
+
 import {
-  createInstructorAnalytics,
   type AnalyticsViewer,
+  createInstructorAnalytics,
 } from "../index.server";
 
 // Shared by the instructor analytics test files. Call

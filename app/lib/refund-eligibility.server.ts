@@ -1,18 +1,13 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
+
 import {
   lessonProgress,
+  LessonProgressStatus,
   lessons,
   modules,
-  videoWatchEvents,
-  LessonProgressStatus,
   RefundStatus,
+  videoWatchEvents,
 } from "~/db/schema";
-import {
-  REFUND_COMPLETION_LIMIT,
-  REFUND_WATCH_LIMIT_SECONDS,
-  REFUND_WINDOW_DAYS,
-  type RuleBreak,
-} from "~/lib/refund-rules";
 import { isWithinWindow } from "~/lib/refund-calendar";
 import {
   getPurchase,
@@ -23,6 +18,12 @@ import {
   type Purchase,
   type Queryable,
 } from "~/lib/refund-purchases.server";
+import {
+  REFUND_COMPLETION_LIMIT,
+  REFUND_WATCH_LIMIT_SECONDS,
+  REFUND_WINDOW_DAYS,
+  type RuleBreak,
+} from "~/lib/refund-rules";
 
 // ─── Figures and rules ───
 

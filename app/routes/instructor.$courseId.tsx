@@ -1,27 +1,29 @@
-import { Link } from "react-router";
-import type { Route } from "./+types/instructor.$courseId";
-import { coursePermissions } from "~/modules/permissions/course-permissions.server";
-import { courseEditor } from "~/modules/course-editor/index.server";
-import { Button } from "~/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
+  AlertTriangle,
   ArrowLeft,
   BookOpen,
+  FileText,
   Settings,
   Users,
-  AlertTriangle,
-  FileText,
 } from "lucide-react";
+import { Link } from "react-router";
 import { data, isRouteErrorResponse } from "react-router";
+
 import {
   InlineEditableDescription,
   InlineEditableTitle,
 } from "~/components/course-editor/course-header-fields";
 import { CurriculumTab } from "~/components/course-editor/curriculum-tab";
-import { SettingsTab } from "~/components/course-editor/settings-tab";
 import { SalesCopyTab } from "~/components/course-editor/sales-copy-tab";
+import { SettingsTab } from "~/components/course-editor/settings-tab";
 import { StudentsTab } from "~/components/course-editor/students-tab";
 import { useCourseEditorSubmissions } from "~/components/course-editor/use-course-editor-submissions";
+import { Button } from "~/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { courseEditor } from "~/modules/course-editor/index.server";
+import { coursePermissions } from "~/modules/permissions/course-permissions.server";
+
+import type { Route } from "./+types/instructor.$courseId";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   const title = loaderData?.course?.title ?? "Edit Course";

@@ -1,10 +1,11 @@
-import { useFetcher } from "react-router";
 import { NotebookPen } from "lucide-react";
-import type { FullLessonData } from "~/modules/lesson-page/index.server";
+import { useFetcher } from "react-router";
+
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Textarea } from "~/components/ui/textarea";
 import { formatRelativeTime } from "~/lib/utils";
+import type { FullLessonData } from "~/modules/lesson-page/index.server";
 
 export function LessonNote({ note }: { note: FullLessonData["note"] }) {
   const fetcher = useFetcher<{ ok: boolean; error?: string }>();

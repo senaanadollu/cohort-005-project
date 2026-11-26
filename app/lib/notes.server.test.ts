@@ -1,8 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, seedBaseData, type TestDb } from "~/test/setup";
+import { beforeEach, describe, expect, it } from "vitest";
+
 import * as schema from "~/db/schema";
 import { UserRole } from "~/db/schema";
 import { plainText } from "~/lib/text";
+import { createTestDb, seedBaseData, type TestDb } from "~/test/setup";
+
 import { getNote, listNotes, saveNote } from "./notes.server";
 
 const NOW = new Date(2026, 9, 6, 12, 0, 0);

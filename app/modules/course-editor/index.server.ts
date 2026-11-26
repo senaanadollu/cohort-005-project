@@ -1,7 +1,8 @@
 import { db } from "~/db";
+
 import type { Db } from "./lib/db";
+import { type EditedCourse, runCourseEditorAction } from "./lib/editor-actions";
 import { getCourseEditorData } from "./lib/editor-data";
-import { runCourseEditorAction, type EditedCourse } from "./lib/editor-actions";
 
 export type { CourseEditorData } from "./lib/editor-data";
 export type { EditedCourse } from "./lib/editor-actions";

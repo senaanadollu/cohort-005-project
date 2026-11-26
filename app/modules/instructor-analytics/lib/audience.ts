@@ -8,9 +8,11 @@ import {
   sql,
   sum,
 } from "drizzle-orm";
-import { courses, coupons, enrollments, purchases, users } from "~/db/schema";
+
+import { coupons, courses, enrollments, purchases, users } from "~/db/schema";
 import type { AnalyticsRange } from "~/lib/analytics";
-import { ownedBy, purchaseScope, scopeOn, type Db } from "./scope";
+
+import { type Db, ownedBy, purchaseScope, scopeOn } from "./scope";
 
 // ─── Audience ───
 // Who is learning, who is paying, and how the two relate.

@@ -1,15 +1,16 @@
-import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { eq, sql } from "drizzle-orm";
+import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+
 import * as schema from "~/db/schema";
 import {
-  QuestionType,
-  modules,
   lessons,
-  quizzes,
-  quizQuestions,
-  quizOptions,
-  quizAttempts,
+  modules,
+  QuestionType,
   quizAnswers,
+  quizAttempts,
+  quizOptions,
+  quizQuestions,
+  quizzes,
 } from "~/db/schema";
 
 export type Db = BetterSQLite3Database<typeof schema>;

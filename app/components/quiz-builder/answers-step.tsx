@@ -1,8 +1,10 @@
 import { Check, Plus, Trash2 } from "lucide-react";
-import { QuestionType } from "~/db/schema";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { QuestionType } from "~/db/schema";
+
 import {
   generateId,
   type WizardOption,

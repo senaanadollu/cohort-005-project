@@ -1,7 +1,8 @@
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
+
 import { db } from "~/db";
-import { courses, courseRatings } from "~/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { courseRatings, courses } from "~/db/schema";
 import { MAX_RATING, MIN_RATING } from "~/lib/ratings";
 
 export type CourseRatingSummary = {

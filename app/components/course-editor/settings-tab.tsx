@@ -1,8 +1,8 @@
-import { Link } from "react-router";
 import { Eye, Globe } from "lucide-react";
-import { CourseStatus } from "~/db/schema";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { Link } from "react-router";
+
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import {
   Select,
@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { CourseStatus } from "~/db/schema";
+
 import type { EditorCourse } from "./types";
 
 function statusBadgeColor(status: string) {

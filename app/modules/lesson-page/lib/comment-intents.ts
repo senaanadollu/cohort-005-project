@@ -1,8 +1,5 @@
 import { data } from "react-router";
-import {
-  coursePermissions,
-  type CourseRef,
-} from "~/modules/permissions/course-permissions.server";
+
 import { db } from "~/db";
 import {
   createComment,
@@ -11,6 +8,11 @@ import {
 } from "~/lib/comments.server";
 import { defaultNotifications } from "~/lib/notifications.server";
 import { parseFormData } from "~/lib/validation";
+import {
+  coursePermissions,
+  type CourseRef,
+} from "~/modules/permissions/course-permissions.server";
+
 import { getCommentById } from "./discussion";
 import {
   createCommentSchema,

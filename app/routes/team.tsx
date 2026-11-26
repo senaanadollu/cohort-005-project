@@ -1,30 +1,32 @@
+import { and, eq } from "drizzle-orm";
+import { AlertTriangle, BookOpen, Check, Copy, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useFetcher } from "react-router";
-import { toast } from "sonner";
-import type { Route } from "./+types/team";
-import { people } from "~/modules/permissions/person.server";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import { Textarea } from "~/components/ui/textarea";
-import { Users, BookOpen, Copy, Check, AlertTriangle } from "lucide-react";
 import { data, isRouteErrorResponse } from "react-router";
+import { toast } from "sonner";
+
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { Textarea } from "~/components/ui/textarea";
 import { db } from "~/db";
 import {
-  teams,
-  teamMembers,
   coupons,
   courses,
-  users,
-  TeamMemberRole,
   RefundStatus,
+  TeamMemberRole,
+  teamMembers,
+  teams,
+  users,
 } from "~/db/schema";
-import { eq, and } from "drizzle-orm";
 import {
   getSeatAvailability,
   listTeamLicences,
   type SeatAvailability,
 } from "~/lib/refunds.server";
 import { formatPrice } from "~/lib/utils";
+import { people } from "~/modules/permissions/person.server";
+
+import type { Route } from "./+types/team";
 
 function getTeamForAdmin(userId: number) {
   const membership = db
@@ -55,15 +57,15 @@ function getUserById(id: number) {
   return db.select().from(users).where(eq(users.id, id)).get();
 }
 
-interface CourseStats {
+type CourseStats = {
   courseId: number;
   courseTitle: string;
   courseSlug: string;
   totalSeats: number;
   claimedSeats: number;
-}
+};
 
-interface CouponRow {
+type CouponRow = {
   id: number;
   code: string;
   courseId: number;
@@ -71,7 +73,7 @@ interface CouponRow {
   redeemedByEmail: string | null;
   availability: SeatAvailability;
   createdAt: string;
-}
+};
 
 export function meta() {
   return [

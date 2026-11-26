@@ -1,8 +1,8 @@
-import type { AgentChoice, ProviderEntry, Resolution } from "./types";
-import { CUSTOM_ID, ISSUE_URL, OTHER_ID } from "./types";
 import { AGENTS } from "./catalogue";
 import { buildCommand } from "./command";
 import { resolveCustomTarget } from "./custom-target";
+import type { AgentChoice, ProviderEntry, Resolution } from "./types";
+import { CUSTOM_ID, ISSUE_URL, OTHER_ID } from "./types";
 
 /**
  * Turn a saved choice into everything the tool needs, or into a clear reason

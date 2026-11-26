@@ -1,5 +1,5 @@
-import type { AgentEntry } from "../types";
 import { piModels } from "../setup-files";
+import type { AgentEntry } from "../types";
 
 const PI_NOTE =
   "Pi has no base URL variable and no flag. A config file is the only way to " +

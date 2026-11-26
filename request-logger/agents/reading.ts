@@ -1,7 +1,7 @@
-import type { RendererId } from "./types";
 import { AGENTS } from "./catalogue";
+import type { RendererId } from "./types";
 
-export interface AgentSummary {
+export type AgentSummary = {
   id: string;
   label: string;
   supported: boolean;
@@ -9,12 +9,12 @@ export interface AgentSummary {
   needsProvider: boolean;
   /** True when this agent has no catalogue provider: every setup is custom. */
   alwaysCustom: boolean;
-}
+};
 
-export interface ProviderSummary {
+export type ProviderSummary = {
   id: string;
   label: string;
-}
+};
 
 /**
  * Every agent the wizard offers, in the order it offers them.

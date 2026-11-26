@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+
 import { CUSTOM_ID, customTargetNeedsModel, resolveChoice } from "../agents";
-import { PORT, target, customTarget } from "./test-helpers";
+import { customTarget, PORT, target } from "./test-helpers";
 
 describe("resolveChoice — custom base URL", () => {
   it("resolves a valid http:// target", () => {

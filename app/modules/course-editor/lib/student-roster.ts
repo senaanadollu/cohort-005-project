@@ -1,14 +1,16 @@
-import { eq, and, or, sql, desc } from "drizzle-orm";
+import { and, desc, eq, or, sql } from "drizzle-orm";
+
 import {
-  users,
-  modules,
-  lessons,
   enrollments,
   lessonProgress,
   LessonProgressStatus,
-  quizzes,
+  lessons,
+  modules,
   quizAttempts,
+  quizzes,
+  users,
 } from "~/db/schema";
+
 import type { Db } from "./db";
 
 function getUserById(database: Db, id: number) {
@@ -40,7 +42,7 @@ function getCourseLessonIds(database: Db, courseId: number): number[] {
   const courseLessons = database
     .select({ id: lessons.id })
     .from(lessons)
-    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id)))!)
+    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id))))
     .all();
 
   return courseLessons.map((l) => l.id);
@@ -63,7 +65,7 @@ function calculateProgress(
         durationMinutes: lessons.durationMinutes,
       })
       .from(lessons)
-      .where(or(...lessonIds.map((id) => eq(lessons.id, id)))!)
+      .where(or(...lessonIds.map((id) => eq(lessons.id, id))))
       .all();
 
     const totalDuration = courseLessons.reduce(
@@ -80,7 +82,7 @@ function calculateProgress(
         and(
           eq(lessonProgress.userId, userId),
           eq(lessonProgress.status, LessonProgressStatus.Completed),
-          or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))!
+          or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))
         )
       )
       .all();
@@ -101,7 +103,7 @@ function calculateProgress(
       and(
         eq(lessonProgress.userId, userId),
         eq(lessonProgress.status, LessonProgressStatus.Completed),
-        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))!
+        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))
       )
     )
     .get();

@@ -1,12 +1,13 @@
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { formatBucket, formatMoney } from "~/lib/analytics";
-import type { RevenueSeries } from "~/modules/instructor-analytics/types";
+
 import {
+  type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "~/components/ui/chart";
+import { formatBucket, formatMoney } from "~/lib/analytics";
+import type { RevenueSeries } from "~/modules/instructor-analytics/types";
 
 const chartConfig = {
   grossCents: { label: "Gross revenue", color: "var(--chart-1)" },

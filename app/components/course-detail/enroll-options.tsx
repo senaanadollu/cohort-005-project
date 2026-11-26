@@ -1,11 +1,12 @@
 import { Link } from "react-router";
+
 import { Button } from "~/components/ui/button";
 import {
   Tabs,
-  TabsList,
-  TabsTrigger,
   TabsContent,
   TabsContentNoShift,
+  TabsList,
+  TabsTrigger,
 } from "~/components/ui/tabs";
 import { formatPrice } from "~/lib/utils";
 

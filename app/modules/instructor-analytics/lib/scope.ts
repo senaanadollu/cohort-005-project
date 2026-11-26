@@ -1,9 +1,10 @@
 import { and, eq, gte } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
+
 import * as schema from "~/db/schema";
 import { courses, purchases } from "~/db/schema";
-import { rangeStart, type AnalyticsRange } from "~/lib/analytics";
+import { type AnalyticsRange, rangeStart } from "~/lib/analytics";
 
 // ─── Scope ───
 // The filters every figure shares: whose courses, and since when.

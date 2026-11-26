@@ -1,6 +1,7 @@
+import { CheckCircle2, ChevronDown, Circle, PlayCircle } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { CheckCircle2, ChevronDown, Circle, PlayCircle } from "lucide-react";
+
 import { LessonProgressStatus } from "~/db/schema";
 import { cn } from "~/lib/utils";
 

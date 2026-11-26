@@ -1,5 +1,5 @@
-import { UserRole } from "../../app/db/schema";
 import * as schema from "../../app/db/schema";
+import { UserRole } from "../../app/db/schema";
 import { db } from "./database";
 import { daysAgo, slugify } from "./helpers";
 import type { StudentByEmail } from "./types";

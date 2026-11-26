@@ -1,9 +1,11 @@
+import { HelpCircle, RotateCcw, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { useFetcher } from "react-router";
 import { toast } from "sonner";
-import { HelpCircle, RotateCcw, Trophy } from "lucide-react";
+
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+
 import { QuizResults } from "./quiz-results";
 import type { BestQuizAttempt, LessonQuiz, QuizResult } from "./quiz-types";
 

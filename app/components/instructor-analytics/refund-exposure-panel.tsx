@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+
 import { formatMoney } from "~/lib/analytics";
 import type { RefundExposure } from "~/modules/instructor-analytics/types";
 

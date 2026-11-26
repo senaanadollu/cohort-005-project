@@ -1,22 +1,24 @@
+import { AlertTriangle, ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useFetcher, useNavigate } from "react-router";
-import { toast } from "sonner";
-import type { Route } from "./+types/instructor.$courseId.lessons.$lessonId.quiz";
-import { coursePermissions } from "~/modules/permissions/course-permissions.server";
-import { quizAuthoring } from "~/modules/quiz-authoring/index.server";
-import type { QuestionType } from "~/db/schema";
-import { Button } from "~/components/ui/button";
-import { ArrowLeft, ArrowRight, Trash2, AlertTriangle } from "lucide-react";
 import { data, isRouteErrorResponse } from "react-router";
+import { toast } from "sonner";
+
+import { AnswersStep } from "~/components/quiz-builder/answers-step";
+import { QuestionsStep } from "~/components/quiz-builder/questions-step";
+import { ReviewStep } from "~/components/quiz-builder/review-step";
+import { SettingsStep } from "~/components/quiz-builder/settings-step";
+import { StepIndicator } from "~/components/quiz-builder/step-indicator";
 import {
   generateId,
   type WizardState,
 } from "~/components/quiz-builder/wizard-state";
-import { StepIndicator } from "~/components/quiz-builder/step-indicator";
-import { SettingsStep } from "~/components/quiz-builder/settings-step";
-import { QuestionsStep } from "~/components/quiz-builder/questions-step";
-import { AnswersStep } from "~/components/quiz-builder/answers-step";
-import { ReviewStep } from "~/components/quiz-builder/review-step";
+import { Button } from "~/components/ui/button";
+import type { QuestionType } from "~/db/schema";
+import { coursePermissions } from "~/modules/permissions/course-permissions.server";
+import { quizAuthoring } from "~/modules/quiz-authoring/index.server";
+
+import type { Route } from "./+types/instructor.$courseId.lessons.$lessonId.quiz";
 
 // ─── Meta ───
 
@@ -81,7 +83,7 @@ export default function QuizBuilderWizard({
         questions: existingQuiz.questions.map((q) => ({
           id: generateId(),
           text: q.questionText,
-          type: q.questionType as QuestionType,
+          type: q.questionType,
           options: q.options.map((o) => ({
             id: generateId(),
             text: o.optionText,

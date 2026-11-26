@@ -1,14 +1,14 @@
+import { buildCommand, powerShellQuote, shellQuote } from "./command";
+import { piModels } from "./setup-files";
 import type {
   AgentChoice,
   AgentEntry,
   ProviderEntry,
   RendererId,
-  ResolveError,
   Resolution,
+  ResolveError,
 } from "./types";
 import { CUSTOM_LABEL } from "./types";
-import { piModels } from "./setup-files";
-import { buildCommand, powerShellQuote, shellQuote } from "./command";
 
 /**
  * Turn what the student typed into an origin (scheme + host [+ port]), or

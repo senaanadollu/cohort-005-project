@@ -1,4 +1,5 @@
 import { styleText } from "node:util";
+
 import type { ProxyTarget } from "./upstream";
 
 export const dim = (text: string) => styleText("dim", text);

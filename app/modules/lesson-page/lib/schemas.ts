@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { MAX_NOTE_LENGTH } from "~/lib/notes";
 
 export const markCompleteSchema = z.object({

@@ -1,5 +1,5 @@
-import type { CourseProgressSummary } from "~/modules/instructor-analytics/types";
 import { Card, CardContent } from "~/components/ui/card";
+import type { CourseProgressSummary } from "~/modules/instructor-analytics/types";
 
 /** The two completion figures, side by side and deliberately not merged. */
 export function CourseProgress({

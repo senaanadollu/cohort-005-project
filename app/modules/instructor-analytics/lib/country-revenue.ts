@@ -1,8 +1,10 @@
 import { and, count, eq, sum } from "drizzle-orm";
+
 import { purchases } from "~/db/schema";
-import { splitRevenue, type AnalyticsRange } from "~/lib/analytics";
+import { type AnalyticsRange, splitRevenue } from "~/lib/analytics";
 import { getDiscountForCountry } from "~/lib/ppp";
-import { sinceRange, type Db } from "./scope";
+
+import { type Db, sinceRange } from "./scope";
 
 // ─── Revenue by country ───
 // Where a selected course's buyers are, and how much of its revenue came

@@ -1,11 +1,12 @@
 import { db } from "~/db";
+
 import { handleQuizAction } from "./lib/quiz-action";
 import {
+  type Db,
   getLessonById,
   getModuleById,
   getQuizByLessonId,
   getQuizWithQuestions,
-  type Db,
 } from "./lib/quiz-store";
 
 /**

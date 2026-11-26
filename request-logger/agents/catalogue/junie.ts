@@ -1,5 +1,5 @@
-import type { AgentEntry } from "../types";
 import { junieConfig } from "../setup-files";
+import type { AgentEntry } from "../types";
 
 const JUNIE_NOTE =
   "Junie has no existing login for this tool to pass through the way Claude " +

@@ -1,16 +1,17 @@
+import { asc, eq } from "drizzle-orm";
+
+import type { RenderedComment } from "~/components/comment-thread";
 import { db } from "~/db";
 import {
   comments,
   courses,
   lessons,
   modules,
-  users,
   UserRole,
+  users,
 } from "~/db/schema";
-import { asc, eq } from "drizzle-orm";
 import { renderComment } from "~/lib/comment-markdown.server";
-import { markdown, type Markdown } from "~/lib/text";
-import type { RenderedComment } from "~/components/comment-thread";
+import { type Markdown, markdown } from "~/lib/text";
 
 type CommentAuthor = {
   id: number;

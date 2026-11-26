@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { Pencil } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
 
 export function InlineEditableTitle({
   value,

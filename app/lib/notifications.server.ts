@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { eq } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+
 import * as schema from "~/db/schema";
 import { users } from "~/db/schema";
 import type {
@@ -77,7 +78,7 @@ export type Notification = {
   };
 }[NotificationKind];
 
-export interface Notifications {
+export type Notifications = {
   /**
    * Sends one Notification. The idempotency key makes a retry with the same
    * key a no-op, e.g. `discussion-reply:<commentId>`.
@@ -112,7 +113,7 @@ export interface Notifications {
    * Notifications that only mention it (a reply's `questionId`) stay.
    */
   archiveForComment(commentId: number): Promise<void>;
-}
+};
 
 /**
  * Runs Notifications work that must never break what called it. A failure is

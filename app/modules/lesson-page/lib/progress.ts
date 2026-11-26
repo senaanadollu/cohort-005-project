@@ -1,12 +1,13 @@
+import { and, desc, eq, or, sql } from "drizzle-orm";
+
 import { db } from "~/db";
 import {
   lessonProgress,
+  LessonProgressStatus,
   lessons,
   modules,
   videoWatchEvents,
-  LessonProgressStatus,
 } from "~/db/schema";
-import { and, desc, eq, or, sql } from "drizzle-orm";
 
 export function getLessonProgress(userId: number, lessonId: number) {
   return db
@@ -33,7 +34,7 @@ export function getLessonProgressForCourse(userId: number, courseId: number) {
   const courseLessons = db
     .select({ id: lessons.id })
     .from(lessons)
-    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id)))!)
+    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id))))
     .all();
 
   if (courseLessons.length === 0) return [];
@@ -44,7 +45,7 @@ export function getLessonProgressForCourse(userId: number, courseId: number) {
     .where(
       and(
         eq(lessonProgress.userId, userId),
-        or(...courseLessons.map((l) => eq(lessonProgress.lessonId, l.id)))!
+        or(...courseLessons.map((l) => eq(lessonProgress.lessonId, l.id)))
       )
     )
     .all();

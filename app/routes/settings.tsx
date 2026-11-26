@@ -1,39 +1,41 @@
-import { useRef, useEffect } from "react";
+import { eq } from "drizzle-orm";
+import { AlertTriangle } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
+import { data, isRouteErrorResponse, Link } from "react-router";
 import { toast } from "sonner";
 import { z } from "zod";
-import type { Route } from "./+types/settings";
-import { people } from "~/modules/permissions/person.server";
-import { parseFormData } from "~/lib/validation";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
-import { UserRole, RefundStatus, users } from "~/db/schema";
-import { AlertTriangle } from "lucide-react";
-import { data, isRouteErrorResponse, Link } from "react-router";
-import { db } from "~/db";
-import { eq } from "drizzle-orm";
-import { formatPrice } from "~/lib/utils";
-import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
 import { Switch } from "~/components/ui/switch";
-import {
-  defaultNotifications,
-  tolerateNotificationFailure,
-} from "~/lib/notifications.server";
-import {
-  getFeedPreferences,
-  visibleNotificationCategories,
-  setFeedPreference,
-  syncUser,
-} from "~/lib/notification-preferences.server";
+import { Textarea } from "~/components/ui/textarea";
+import { db } from "~/db";
+import { RefundStatus, UserRole, users } from "~/db/schema";
 import {
   DEFAULT_FEED_PREFERENCES,
   NOTIFICATION_CATEGORIES,
   NOTIFICATION_CATEGORY_LABELS,
   type NotificationCategory,
 } from "~/lib/notification-preferences";
+import {
+  getFeedPreferences,
+  setFeedPreference,
+  syncUser,
+  visibleNotificationCategories,
+} from "~/lib/notification-preferences.server";
+import {
+  defaultNotifications,
+  tolerateNotificationFailure,
+} from "~/lib/notifications.server";
+import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
+import { formatPrice } from "~/lib/utils";
+import { parseFormData } from "~/lib/validation";
+import { people } from "~/modules/permissions/person.server";
+
+import type { Route } from "./+types/settings";
 
 const settingsSchema = z.discriminatedUnion("intent", [
   z.object({

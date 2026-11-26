@@ -1,8 +1,19 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import type { TestDb, seedBaseData } from "~/test/setup";
+import { beforeEach, describe, expect, it } from "vitest";
+
 import * as schema from "~/db/schema";
 import { LessonProgressStatus, RefundStatus } from "~/db/schema";
+import type { seedBaseData, TestDb } from "~/test/setup";
+
 import type { FakeNotifications } from "./notifications.fake.server";
+import {
+  addStudent,
+  buyForSelf,
+  buySeats,
+  claimSeat,
+  NOW,
+  raise,
+  setupRefundScenario,
+} from "./refunds.fixtures.server";
 import {
   approveRefundRequest,
   declineRefundRequest,
@@ -11,16 +22,6 @@ import {
   listTeamLicences,
   raiseRefundRequest,
 } from "./refunds.server";
-
-import {
-  NOW,
-  addStudent,
-  buyForSelf,
-  buySeats,
-  claimSeat,
-  raise,
-  setupRefundScenario,
-} from "./refunds.fixtures.server";
 
 let db: TestDb;
 let base: ReturnType<typeof seedBaseData>;

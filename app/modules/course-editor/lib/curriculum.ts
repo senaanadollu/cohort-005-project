@@ -1,6 +1,8 @@
-import { eq, and, sql, gt, gte } from "drizzle-orm";
+import { and, eq, gt, gte, sql } from "drizzle-orm";
+
+import { lessons, modules } from "~/db/schema";
 import { markdown } from "~/lib/text";
-import { modules, lessons } from "~/db/schema";
+
 import type { Db } from "./db";
 
 export function getModuleById(database: Db, id: number) {

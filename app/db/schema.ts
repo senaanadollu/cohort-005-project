@@ -1,12 +1,13 @@
 import {
-  sqliteTable,
-  text,
+  type AnySQLiteColumn,
+  index,
   integer,
   real,
-  index,
+  sqliteTable,
+  text,
   uniqueIndex,
-  type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
+
 import type { Markdown, PlainText } from "~/lib/text";
 
 export enum UserRole {

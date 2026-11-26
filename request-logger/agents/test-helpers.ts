@@ -1,4 +1,4 @@
-import { resolveChoice, type AgentChoice } from "../agents";
+import { type AgentChoice, resolveChoice } from "../agents";
 
 export const PORT = { port: 8787, platform: "linux" as NodeJS.Platform };
 

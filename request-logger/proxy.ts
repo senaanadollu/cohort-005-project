@@ -16,35 +16,36 @@
  * Zero runtime dependencies — Node built-ins only.
  */
 
+import fs from "node:fs";
 import http from "node:http";
 import https from "node:https";
-import fs from "node:fs";
 import path from "node:path";
 import type { Duplex } from "node:stream";
 import { fileURLToPath } from "node:url";
-import { renderMarkdown } from "./render";
+
 import {
-  resolveChoice,
-  shouldLogRequest,
   type AgentChoice,
   type CustomTarget,
+  resolveChoice,
   type ResolvedTarget,
+  shouldLogRequest,
 } from "./agents";
 import { askChoice, clearChoice, loadChoice, saveChoice } from "./config";
 import {
-  forwardHeaders,
-  upstreamConnection,
-  upstreamPathPrefix,
-  type ProxyTarget,
-} from "./proxy/upstream";
-import {
-  trackBurst,
-  burstKey,
   BURST_THRESHOLD,
   BURST_WINDOW_MS,
+  burstKey,
   type BurstState,
+  trackBurst,
 } from "./proxy/burst-guard";
 import { bold, dim, printBanner, wrap } from "./proxy/terminal";
+import {
+  forwardHeaders,
+  type ProxyTarget,
+  upstreamConnection,
+  upstreamPathPrefix,
+} from "./proxy/upstream";
+import { renderMarkdown } from "./render";
 
 // The pure pieces live in ./proxy/; they are re-exported so importers (and the
 // tests) keep using "./proxy".
@@ -180,7 +181,7 @@ export function rejectUpgrade(req: http.IncomingMessage, socket: Duplex): void {
   );
 }
 
-interface Capture {
+type Capture = {
   base: string;
   target: ProxyTarget;
   timestamp: string;
@@ -191,7 +192,7 @@ interface Capture {
   requestBody: Buffer;
   requestEncoding?: string;
   responseRaw: string;
-}
+};
 
 /** Module-level on purpose: one guard for the whole process, the same as LOG_DIR. */
 let burstState: BurstState | null = null;

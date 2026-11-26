@@ -1,12 +1,14 @@
 import { data } from "react-router";
+
+import { db } from "~/db";
+import { isBookmarked } from "~/lib/bookmarks.server";
+import { renderMarkdown } from "~/lib/markdown.server";
+import { getNote } from "~/lib/notes.server";
 import {
   coursePermissions,
   type DenialReason,
 } from "~/modules/permissions/course-permissions.server";
-import { db } from "~/db";
-import { isBookmarked } from "~/lib/bookmarks.server";
-import { getNote } from "~/lib/notes.server";
-import { renderMarkdown } from "~/lib/markdown.server";
+
 import {
   flattenCourseLessons,
   getCourseWithDetails,
@@ -14,6 +16,8 @@ import {
   getModuleById,
   getUserById,
 } from "./course-outline";
+import { getLessonThread, renderThread } from "./discussion";
+import { lessonRef } from "./lesson-ref";
 import {
   calculateWatchProgress,
   getLastWatchPosition,
@@ -21,13 +25,11 @@ import {
   getLessonProgressForCourse,
   markLessonInProgress,
 } from "./progress";
-import { getLessonThread, renderThread } from "./discussion";
 import {
   getBestAttempt,
   getQuizByLessonId,
   getQuizWithQuestions,
 } from "./quiz";
-import { lessonRef } from "./lesson-ref";
 
 export async function loadLessonPage(
   params: { slug: string; lessonId: string },
@@ -87,7 +89,7 @@ export async function loadLessonPage(
   let lessonStatus: string | null = null;
   let lastWatchPosition = 0;
   let watchProgress = 0;
-  let lessonProgressMap: Record<number, string> = {};
+  const lessonProgressMap: Record<number, string> = {};
 
   if (currentUserId) {
     // Progress is recorded only for people who can take the course, so a

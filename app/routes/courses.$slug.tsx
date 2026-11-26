@@ -1,11 +1,16 @@
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
-import { toast } from "sonner";
-import type { Route } from "./+types/courses.$slug";
-import { coursePermissions } from "~/modules/permissions/course-permissions.server";
-import { db } from "~/db";
 import { data } from "react-router";
-import { getRefundOffer, type RefundOffer } from "~/lib/refunds.server";
+import { toast } from "sonner";
+
+import { CourseContent } from "~/components/course-detail/course-content";
+import { CourseDetailError } from "~/components/course-detail/course-detail-error";
+import { CourseDetailSkeleton } from "~/components/course-detail/course-detail-skeleton";
+import { CourseHero } from "~/components/course-detail/course-hero";
+import { CourseSidebarCard } from "~/components/course-detail/course-sidebar-card";
+import { EnrollOptions } from "~/components/course-detail/enroll-options";
+import { db } from "~/db";
+import { resolveCountry } from "~/lib/country.server";
 import {
   calculateProgress,
   getCourseWithDetails,
@@ -20,15 +25,12 @@ import {
   ratingSchema,
 } from "~/lib/course-ratings.server";
 import { renderMarkdown } from "~/lib/markdown.server";
-import { resolveCountry } from "~/lib/country.server";
 import { calculatePppPrice, getCountryTierInfo } from "~/lib/ppp";
+import { getRefundOffer, type RefundOffer } from "~/lib/refunds.server";
 import { parseFormData } from "~/lib/validation";
-import { CourseContent } from "~/components/course-detail/course-content";
-import { CourseDetailError } from "~/components/course-detail/course-detail-error";
-import { CourseDetailSkeleton } from "~/components/course-detail/course-detail-skeleton";
-import { CourseHero } from "~/components/course-detail/course-hero";
-import { CourseSidebarCard } from "~/components/course-detail/course-sidebar-card";
-import { EnrollOptions } from "~/components/course-detail/enroll-options";
+import { coursePermissions } from "~/modules/permissions/course-permissions.server";
+
+import type { Route } from "./+types/courses.$slug";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   const title = loaderData?.course?.title ?? "Course";

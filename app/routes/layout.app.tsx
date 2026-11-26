@@ -1,28 +1,30 @@
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { Outlet } from "react-router";
-import type { Route } from "./+types/layout.app";
-import { Sidebar } from "~/components/sidebar";
+import { Toaster } from "sonner";
+
 import { DevUI } from "~/components/dev-ui";
 import { NotificationFeedProvider } from "~/components/notification-feed";
+import { Sidebar } from "~/components/sidebar";
+import { db } from "~/db";
+import {
+  courses,
+  lessonProgress,
+  LessonProgressStatus,
+  lessons,
+  modules,
+  TeamMemberRole,
+  teamMembers,
+  teams,
+  users,
+} from "~/db/schema";
 import {
   defaultNotifications,
   tolerateNotificationFailure,
 } from "~/lib/notifications.server";
-import { Toaster } from "sonner";
+import { COUNTRIES, getCountryTierInfo } from "~/lib/ppp";
 import { getCurrentUserId, getDevCountry } from "~/lib/session";
-import { getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
-import { eq, and, or, sql, desc } from "drizzle-orm";
-import { db } from "~/db";
-import {
-  users,
-  courses,
-  modules,
-  lessons,
-  lessonProgress,
-  teams,
-  teamMembers,
-  TeamMemberRole,
-  LessonProgressStatus,
-} from "~/db/schema";
+
+import type { Route } from "./+types/layout.app";
 
 function getAllUsers() {
   return db.select().from(users).all();
@@ -65,7 +67,7 @@ function getCourseLessonIds(courseId: number): number[] {
   const courseLessons = db
     .select({ id: lessons.id })
     .from(lessons)
-    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id)))!)
+    .where(or(...courseModules.map((m) => eq(lessons.moduleId, m.id))))
     .all();
 
   return courseLessons.map((l) => l.id);
@@ -87,7 +89,7 @@ function calculateProgress(
         durationMinutes: lessons.durationMinutes,
       })
       .from(lessons)
-      .where(or(...lessonIds.map((id) => eq(lessons.id, id)))!)
+      .where(or(...lessonIds.map((id) => eq(lessons.id, id))))
       .all();
 
     const totalDuration = courseLessons.reduce(
@@ -104,7 +106,7 @@ function calculateProgress(
         and(
           eq(lessonProgress.userId, userId),
           eq(lessonProgress.status, LessonProgressStatus.Completed),
-          or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))!
+          or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))
         )
       )
       .all();
@@ -125,7 +127,7 @@ function calculateProgress(
       and(
         eq(lessonProgress.userId, userId),
         eq(lessonProgress.status, LessonProgressStatus.Completed),
-        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))!
+        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))
       )
     )
     .get();
@@ -144,7 +146,7 @@ function getCompletedLessonCount(userId: number, courseId: number) {
       and(
         eq(lessonProgress.userId, userId),
         eq(lessonProgress.status, LessonProgressStatus.Completed),
-        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))!
+        or(...lessonIds.map((id) => eq(lessonProgress.lessonId, id)))
       )
     )
     .get();
@@ -156,7 +158,7 @@ function getTotalLessonCount(courseId: number) {
   return getCourseLessonIds(courseId).length;
 }
 
-function getRecentlyProgressedCourses(userId: number, limit: number = 3) {
+function getRecentlyProgressedCourses(userId: number, limit = 3) {
   return db
     .select({
       courseId: courses.id,

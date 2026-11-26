@@ -1,5 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+
 import { LessonProgressStatus } from "~/db/schema";
+
 import {
   addCourse,
   addLesson,

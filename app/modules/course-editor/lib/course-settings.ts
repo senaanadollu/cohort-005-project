@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
+
+import { courses, CourseStatus } from "~/db/schema";
 import { markdown } from "~/lib/text";
-import { CourseStatus, courses } from "~/db/schema";
+
 import type { Db } from "./db";
 
 export function updateCourse(

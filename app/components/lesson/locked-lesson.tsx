@@ -1,9 +1,11 @@
-import { Link } from "react-router";
 import { MapPin, ShieldAlert } from "lucide-react";
-import type { LockedLessonData } from "~/modules/lesson-page/index.server";
+import { Link } from "react-router";
+
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { countryName } from "~/lib/ppp";
+import type { LockedLessonData } from "~/modules/lesson-page/index.server";
+
 import { CurriculumSidebar } from "./curriculum-sidebar";
 import { LessonBreadcrumb } from "./lesson-breadcrumb";
 

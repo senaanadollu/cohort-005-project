@@ -1,6 +1,6 @@
+import { ompModels } from "../setup-files";
 import type { AgentEntry } from "../types";
 import { CUSTOM_ID, CUSTOM_LABEL } from "../types";
-import { ompModels } from "../setup-files";
 
 const OMP_NOTE =
   "OMP has no backend of its own to hard-code the way the rest of this " +
