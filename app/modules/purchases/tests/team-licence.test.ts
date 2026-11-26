@@ -112,6 +112,15 @@ describe("refusing a Team Licence", () => {
     expect(db.select().from(schema.coupons).all()).toEqual([]);
   });
 
+  it("refuses a course that does not exist and records nothing", async () => {
+    expect(
+      await purchases.buyTeamLicence(base.user.id, 9999, 2, "GB", NOW)
+    ).toEqual({ ok: false, reason: "course_not_found" });
+    expect(db.select().from(schema.purchases).all()).toEqual([]);
+    expect(db.select().from(schema.teams).all()).toEqual([]);
+    expect(db.select().from(schema.coupons).all()).toEqual([]);
+  });
+
   it.each([0, -1, 1.5])(
     "refuses %s Seats and records nothing",
     async (seats) => {
