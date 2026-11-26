@@ -1,16 +1,13 @@
 import { data } from "react-router";
 import { eq, and } from "drizzle-orm";
 import { db } from "~/db";
-import {
-  UserRole,
-  users,
-  courses,
-  enrollments,
-  purchases,
-} from "~/db/schema";
+import { UserRole, users, courses, enrollments } from "~/db/schema";
 import { getCurrentUserId } from "~/lib/session";
 import { resolveCountry } from "~/lib/country.server";
-import { checkPppAccess } from "~/lib/ppp";
+import {
+  purchases,
+  type CountryCheck,
+} from "~/modules/purchases/index.server";
 
 function getUserById(id: number) {
   return db.select().from(users).where(eq(users.id, id)).get();
@@ -32,14 +29,6 @@ function findEnrollment(userId: number, courseId: number) {
 
 function isUserEnrolled(userId: number, courseId: number) {
   return !!findEnrollment(userId, courseId);
-}
-
-function findPurchase(userId: number, courseId: number) {
-  return db
-    .select()
-    .from(purchases)
-    .where(and(eq(purchases.userId, userId), eq(purchases.courseId, courseId)))
-    .get();
 }
 
 // getAccess never throws — the lesson page needs to render a paywall preview for
@@ -94,23 +83,12 @@ export async function getAccess(
   const isStaff = isAdmin || isOwningInstructor;
   const enrolled = isUserEnrolled(userId, courseId);
 
-  // PPP only restricts students who bought at a discount — staff are exempt.
-  let ppp = {
-    blocked: false,
-    blockedCountry: null as string | null,
-    purchaseCountry: null as string | null,
-  };
-
-  if (enrolled && !isStaff && course) {
-    const purchase = findPurchase(userId, courseId);
-    const currentCountry = await resolveCountry(request);
-    ppp = checkPppAccess(
-      course.price,
-      course.pppEnabled,
-      purchase?.country ?? null,
-      currentCountry
-    );
-  }
+  // The country check restricts enrolled Students only; the owning
+  // Instructor and Platform Admins are exempt (ADR 0009).
+  const check: CountryCheck =
+    enrolled && !isStaff && course
+      ? purchases.countryCheck(userId, courseId, await resolveCountry(request))
+      : { blocked: false };
 
   return {
     userId,
@@ -119,10 +97,10 @@ export async function getAccess(
     isOwningInstructor,
     isStaff,
     enrolled,
-    pppBlocked: ppp.blocked,
-    pppBlockedCountry: ppp.blockedCountry,
-    pppPurchaseCountry: ppp.purchaseCountry,
-    canViewContent: isStaff || (enrolled && !ppp.blocked),
+    pppBlocked: check.blocked,
+    pppBlockedCountry: check.blocked ? check.country : null,
+    pppPurchaseCountry: check.blocked ? check.purchaseCountry : null,
+    canViewContent: isStaff || (enrolled && !check.blocked),
   };
 }
 

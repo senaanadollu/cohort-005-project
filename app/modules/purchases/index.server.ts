@@ -11,9 +11,11 @@ import {
   type IndividualPurchaseResult,
   type TeamLicenceResult,
 } from "./lib/buy";
+import { countryCheck, type CountryCheck } from "./lib/country-check";
 import type { Notifications } from "~/lib/notifications.server";
 
 export type { PricedCourse } from "./lib/purchasing-power-price";
+export type { CountryCheck } from "./lib/country-check";
 export type {
   IndividualPurchaseResult,
   PurchaseRefusal,
@@ -87,6 +89,27 @@ export function createPurchases(database: Db) {
       now: Date
     ): Promise<TeamLicenceResult> {
       return buyTeamLicence(database, teamAdminId, courseId, seats, country, now);
+    },
+
+    /**
+     * Whether a Student is blocked from playing a course in `country`, the
+     * country they are in now (`null` when unknown). Reads the Student's
+     * standing Individual Purchase only: bought by them, granting no Seats,
+     * with no Approved Refund Request; the newest if there are several.
+     *
+     * Blocked only when that Purchase was made at a Purchasing-Power Price
+     * below the full price, in a country other than `country` (ADR 0009).
+     * Never blocked when there is no such Purchase (a Student enrolled
+     * through a Claimed Seat, ADR 0013), the Purchase has no country, the
+     * course has purchasing-power pricing switched off, or `country` is
+     * unknown. The staff exemption is the caller's to apply.
+     */
+    countryCheck(
+      studentId: number,
+      courseId: number,
+      country: string | null
+    ): CountryCheck {
+      return countryCheck(database, studentId, courseId, country);
     },
   };
 }
