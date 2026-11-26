@@ -44,9 +44,7 @@ export type Access = {
   /** Owning instructor or admin — the people who speak for the course. */
   isStaff: boolean;
   enrolled: boolean;
-  pppBlocked: boolean;
-  pppBlockedCountry: string | null;
-  pppPurchaseCountry: string | null;
+  countryCheck: CountryCheck;
   /**
    * May they read the course's content (lesson bodies, comments)?
    * Staff always can. Students need an enrollment that isn't PPP-blocked.
@@ -61,9 +59,7 @@ const SIGNED_OUT: Access = {
   isOwningInstructor: false,
   isStaff: false,
   enrolled: false,
-  pppBlocked: false,
-  pppBlockedCountry: null,
-  pppPurchaseCountry: null,
+  countryCheck: { blocked: false },
   canViewContent: false,
 };
 
@@ -85,7 +81,7 @@ export async function getAccess(
 
   // The country check restricts enrolled Students only; the owning
   // Instructor and Platform Admins are exempt (ADR 0009).
-  const check: CountryCheck =
+  const countryCheck: CountryCheck =
     enrolled && !isStaff && course
       ? purchases.countryCheck(userId, courseId, await resolveCountry(request))
       : { blocked: false };
@@ -97,10 +93,8 @@ export async function getAccess(
     isOwningInstructor,
     isStaff,
     enrolled,
-    pppBlocked: check.blocked,
-    pppBlockedCountry: check.blocked ? check.country : null,
-    pppPurchaseCountry: check.blocked ? check.purchaseCountry : null,
-    canViewContent: isStaff || (enrolled && !check.blocked),
+    countryCheck,
+    canViewContent: isStaff || (enrolled && !countryCheck.blocked),
   };
 }
 

@@ -66,7 +66,7 @@ import { renderMarkdown } from "~/lib/markdown.server";
 import { YouTubePlayer } from "~/components/youtube-player";
 import { data, isRouteErrorResponse } from "react-router";
 import { z } from "zod";
-import { COUNTRIES } from "~/lib/ppp";
+import { countryName } from "~/lib/ppp";
 import { parseFormData, parseParams } from "~/lib/validation";
 
 const lessonParamsSchema = z.object({
@@ -710,8 +710,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
   // PPP Access Guard — resolved by getAccess, which treats a blocked user as
   // having no access to the course's content at all.
-  const { pppBlocked, pppBlockedCountry, pppPurchaseCountry, canViewContent } =
-    access;
+  const { countryCheck, canViewContent } = access;
 
   // Comments are confidential to the course: only people who can read the
   // lesson can read the discussion on it.
@@ -818,9 +817,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     lastWatchPosition,
     watchProgress,
     lessonProgressMap,
-    pppBlocked,
-    pppBlockedCountry,
-    pppPurchaseCountry,
+    countryCheck,
     comments,
     canViewContent,
     canModerate: access.isStaff,
@@ -1029,9 +1026,7 @@ export default function LessonViewer({ loaderData }: Route.ComponentProps) {
     lastWatchPosition,
     watchProgress,
     lessonProgressMap,
-    pppBlocked,
-    pppBlockedCountry,
-    pppPurchaseCountry,
+    countryCheck,
     comments,
     canViewContent,
     canModerate,
@@ -1063,15 +1058,9 @@ export default function LessonViewer({ loaderData }: Route.ComponentProps) {
   const quizResult = quizFetcher.data?.quizResult ?? null;
   const isSubmittingQuiz = quizFetcher.state !== "idle";
 
-  if (pppBlocked) {
-    const purchaseCountryName = pppPurchaseCountry
-      ? (COUNTRIES.find((c) => c.code === pppPurchaseCountry)?.name ??
-        pppPurchaseCountry)
-      : "your original country";
-    const currentCountryName = pppBlockedCountry
-      ? (COUNTRIES.find((c) => c.code === pppBlockedCountry)?.name ??
-        pppBlockedCountry)
-      : "a different country";
+  if (countryCheck.blocked) {
+    const purchaseCountryName = countryName(countryCheck.purchaseCountry);
+    const currentCountryName = countryName(countryCheck.country);
 
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">

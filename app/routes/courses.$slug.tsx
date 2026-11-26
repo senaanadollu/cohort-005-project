@@ -424,7 +424,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     : null;
 
   const country = await resolveCountry(request);
-  const pppPrice = purchases.purchasingPowerPrice(courseWithDetails, country);
+  const purchasingPowerPrice = purchases.purchasingPowerPrice(courseWithDetails, country);
   const tierInfo = getCountryTierInfo(country);
 
   return {
@@ -436,7 +436,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     lessonProgressMap,
     nextLessonId,
     currentUserId,
-    pppPrice,
+    purchasingPowerPrice,
     tierInfo,
     ratingSummary,
     userRating,
@@ -537,7 +537,7 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
     lessonProgressMap,
     nextLessonId,
     currentUserId,
-    pppPrice,
+    purchasingPowerPrice,
     tierInfo,
     ratingSummary,
     userRating,
@@ -565,8 +565,8 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
     0
   );
 
-  const pppPriceLabel = formatPrice(pppPrice);
-  const isDiscounted = pppPrice < course.price;
+  const priceLabel = formatPrice(purchasingPowerPrice);
+  const isDiscounted = purchasingPowerPrice < course.price;
 
   const selfPurchaseLink = currentUserId
     ? `/courses/${course.slug}/purchase`
@@ -583,13 +583,13 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
           <div className="text-sm text-muted-foreground line-through">
             {formatPrice(course.price)}
           </div>
-          <div className="text-2xl font-bold">{pppPriceLabel}</div>
+          <div className="text-2xl font-bold">{priceLabel}</div>
           <div className="mt-1 inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
             {tierInfo.label} — PPP discount
           </div>
         </>
       ) : (
-        <div className="text-2xl font-bold">{pppPriceLabel}</div>
+        <div className="text-2xl font-bold">{priceLabel}</div>
       )}
     </div>
   );
@@ -609,7 +609,7 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
           {priceDisplay}
           <Link to={selfPurchaseLink}>
             <Button size="lg" className="w-full">
-              Enroll Now — {pppPriceLabel}
+              Enroll Now — {priceLabel}
             </Button>
           </Link>
         </TabsContent>

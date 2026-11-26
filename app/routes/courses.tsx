@@ -313,14 +313,14 @@ export async function loader({ request, url }: Route.LoaderArgs) {
 
   const coursesWithLessonCount = courses.map((course) => {
     const userProgress = progressMap.get(course.id);
-    const pppPrice = purchases.purchasingPowerPrice(course, country);
+    const purchasingPowerPrice = purchases.purchasingPowerPrice(course, country);
     const rating = ratingSummaries.get(course.id);
     return {
       ...course,
       lessonCount: getLessonCountForCourse(course.id),
       progress: userProgress?.progress ?? null,
       completedLessons: userProgress?.completedLessons ?? null,
-      pppPrice,
+      purchasingPowerPrice,
       ratingAverage: rating?.average ?? null,
       ratingCount: rating?.count ?? 0,
     };
@@ -499,12 +499,12 @@ export default function CourseCatalog({ loaderData }: Route.ComponentProps) {
                     {course.instructorName}
                   </span>
                   <span className="font-semibold text-foreground">
-                    {course.pppPrice < course.price ? (
+                    {course.purchasingPowerPrice < course.price ? (
                       <span className="flex items-center gap-1.5">
                         <span className="text-xs line-through text-muted-foreground font-normal">
                           {formatPrice(course.price)}
                         </span>
-                        {formatPrice(course.pppPrice)}
+                        {formatPrice(course.purchasingPowerPrice)}
                       </span>
                     ) : (
                       formatPrice(course.price)
