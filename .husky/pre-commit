@@ -1,0 +1,13 @@
+# Keep every step here under 3 seconds. The slow checks (typecheck, tests,
+# boundaries, repo-wide format:check) live in `npm run check`, not in this hook.
+
+node scripts/check-file-tokens.mjs
+
+# Prettier on the staged files only.
+if ! git diff --cached --quiet --diff-filter=ACM; then
+  git diff --cached --name-only --diff-filter=ACM -z |
+    xargs -0 npx --no-install prettier --check --ignore-unknown || {
+    echo "Prettier check failed. Run: npx prettier --write <file> && git add <file>" >&2
+    exit 1
+  }
+fi
