@@ -8,6 +8,7 @@ import {
   fakeNotifications,
   type FakeNotifications,
 } from "./notifications.fake.server";
+import { createPurchases } from "~/modules/purchases/index.server";
 
 const NOW = new Date(2026, 9, 6, 12, 0, 0);
 
@@ -32,37 +33,21 @@ beforeEach(() => {
     .get();
 });
 
-function buySeats(seats: number, country: string | null = null) {
-  const team = db.insert(schema.teams).values({}).returning().get();
-  const purchase = db
-    .insert(schema.purchases)
-    .values({
-      userId: teamAdmin.id,
-      courseId: base.course.id,
-      amountPaid: 7900 * seats,
-      country,
-      createdAt: NOW.toISOString(),
-    })
-    .returning()
-    .get();
-  const seatRows = Array.from({ length: seats }, (_, i) =>
-    db
-      .insert(schema.coupons)
-      .values({
-        teamId: team.id,
-        courseId: base.course.id,
-        code: `SEAT-${purchase.id}-${i}`,
-        purchaseId: purchase.id,
-      })
-      .returning()
-      .get()
+async function buySeats(seats: number, country: string | null = null) {
+  const result = await createPurchases(db).buyTeamLicence(
+    teamAdmin.id,
+    base.course.id,
+    seats,
+    country,
+    NOW
   );
-  return { purchase, seats: seatRows };
+  if (!result.ok) throw new Error(result.reason);
+  return result;
 }
 
 describe("claiming a Seat", () => {
   it("enrols the Student and marks the Seat claimed", async () => {
-    const { seats } = buySeats(1);
+    const { seats } = await buySeats(1);
 
     const result = await claimSeat(
       db,
@@ -91,7 +76,7 @@ describe("claiming a Seat", () => {
   });
 
   it("refuses a Seat someone else has claimed", async () => {
-    const { seats } = buySeats(1);
+    const { seats } = await buySeats(1);
     await claimSeat(
       db,
       seats[0].code,
@@ -111,7 +96,7 @@ describe("claiming a Seat", () => {
   });
 
   it("refuses a Seat on hold while its Team Licence has an Open Refund Request", async () => {
-    const { purchase, seats } = buySeats(2);
+    const { purchase, seats } = await buySeats(2);
     raise(purchase.id);
 
     expect(
@@ -125,7 +110,7 @@ describe("claiming a Seat", () => {
   });
 
   it("refuses a Seat whose Team Licence was refunded", async () => {
-    const { purchase, seats } = buySeats(2);
+    const { purchase, seats } = await buySeats(2);
     const platformAdmin = addStudent("Pat");
     await approveRefundRequest(db, await raise(purchase.id), platformAdmin.id, null, NOW, fakeNotifications());
 
@@ -140,7 +125,7 @@ describe("claiming a Seat", () => {
   });
 
   it("refuses a Student already enrolled and leaves the Seat unclaimed", async () => {
-    const { seats } = buySeats(1);
+    const { seats } = await buySeats(1);
     await enrollStudent(
       db,
       base.user.id,
@@ -170,7 +155,7 @@ describe("claiming a Seat", () => {
   });
 
   it("refuses a Student in a different country from the Team Admin", async () => {
-    const { seats } = buySeats(1, "GB");
+    const { seats } = await buySeats(1, "GB");
 
     expect(
       await claimSeat(db, seats[0].code, base.user.id, "IN", NOW, notifications)
@@ -183,7 +168,7 @@ describe("claiming a Seat", () => {
   });
 
   it("refuses an enrolled Student for that reason, before the country", async () => {
-    const { seats } = buySeats(1, "GB");
+    const { seats } = await buySeats(1, "GB");
     await enrollStudent(
       db,
       base.user.id,
@@ -203,7 +188,7 @@ describe("claiming a Seat", () => {
 
 describe("the Seat claim Notification", () => {
   it("tells the Team Admin who claimed which course, and how many Seats are left", async () => {
-    const { seats } = buySeats(3);
+    const { seats } = await buySeats(3);
 
     await claimSeat(db, seats[0].code, base.user.id, "GB", NOW, notifications);
 
@@ -229,7 +214,7 @@ describe("the Seat claim Notification", () => {
   });
 
   it("sends one Notification per claim, counting the Seats left down", async () => {
-    const { seats } = buySeats(2);
+    const { seats } = await buySeats(2);
 
     await claimSeat(db, seats[0].code, base.user.id, "GB", NOW, notifications);
     await claimSeat(
@@ -253,7 +238,7 @@ describe("the Seat claim Notification", () => {
   });
 
   it("sends nothing for a Seat on hold", async () => {
-    const { purchase, seats } = buySeats(2);
+    const { purchase, seats } = await buySeats(2);
     raise(purchase.id);
 
     await claimSeat(db, seats[0].code, base.user.id, "GB", NOW, notifications);
@@ -262,7 +247,7 @@ describe("the Seat claim Notification", () => {
   });
 
   it("sends nothing for a Seat whose Team Licence was refunded", async () => {
-    const { purchase, seats } = buySeats(2);
+    const { purchase, seats } = await buySeats(2);
     await approveRefundRequest(
       db,
       await raise(purchase.id),
@@ -278,7 +263,7 @@ describe("the Seat claim Notification", () => {
   });
 
   it("still claims the Seat when the port fails, and logs it", async () => {
-    const { seats } = buySeats(1);
+    const { seats } = await buySeats(1);
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     notifications.failWith(new Error("Knock is down"));
 
@@ -306,7 +291,7 @@ describe("the Seat claim Notification", () => {
 
 describe("the new Enrollment Notification from a Seat claim", () => {
   it("tells the course's Instructor that the Student enrolled", async () => {
-    const { seats } = buySeats(1);
+    const { seats } = await buySeats(1);
 
     const result = await claimSeat(
       db,
@@ -335,7 +320,7 @@ describe("the new Enrollment Notification from a Seat claim", () => {
   });
 
   it("is not sent when the claim is refused", async () => {
-    const { seats } = buySeats(1, "GB");
+    const { seats } = await buySeats(1, "GB");
 
     await claimSeat(db, seats[0].code, base.user.id, "IN", NOW, notifications);
 
