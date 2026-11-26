@@ -8,7 +8,11 @@ const TOKEN_LIMIT = 5000;
 const BYTES_PER_TOKEN = 4;
 
 // Generated files nobody splits by hand.
-const EXEMPT = [/^package-lock\.json$/, /^drizzle\//];
+const EXEMPT = [
+  /^package-lock\.json$/,
+  /^eslint-suppressions\.json$/,
+  /^drizzle\//,
+];
 
 function git(args) {
   return execFileSync("git", args, {

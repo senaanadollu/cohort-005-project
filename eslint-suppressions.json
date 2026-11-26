@@ -1,0 +1,1758 @@
+{
+  "app/components/comment-thread.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 5
+    },
+    "id-denylist": {
+      "count": 2
+    },
+    "jsx-a11y/no-autofocus": {
+      "count": 3
+    },
+    "max-lines-per-function": {
+      "count": 4
+    },
+    "react/no-danger": {
+      "count": 1
+    }
+  },
+  "app/components/course-detail/course-content.tsx": {
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 3
+    }
+  },
+  "app/components/course-detail/course-detail-skeleton.tsx": {
+    "react/no-array-index-key": {
+      "count": 2
+    }
+  },
+  "app/components/course-detail/course-hero.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/course-detail/course-sidebar-card.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/course-detail/enroll-options.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/course-detail/enrolled-actions.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/course-detail/request-refund.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/course-editor/course-header-fields.tsx": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "id-denylist": {
+      "count": 17
+    },
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/components/course-editor/curriculum-tab.tsx": {
+    "max-lines-per-function": {
+      "count": 7
+    }
+  },
+  "app/components/course-editor/lesson-controls.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-floating-promises": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 12
+    },
+    "max-lines-per-function": {
+      "count": 3
+    }
+  },
+  "app/components/course-editor/module-controls.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-floating-promises": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 6
+    },
+    "id-denylist": {
+      "count": 12
+    },
+    "max-lines-per-function": {
+      "count": 3
+    }
+  },
+  "app/components/course-editor/sales-copy-tab.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/course-editor/settings-tab.tsx": {
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 9
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/course-editor/students-tab.tsx": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/components/course-editor/use-course-editor-submissions.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    },
+    "@typescript-eslint/no-floating-promises": {
+      "count": 7
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 18
+    },
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/components/course-image.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "app/components/dev-ui.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    },
+    "id-denylist": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/course-progress.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/course-tab.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/overview-tab.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/quiz-pass-rates.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/refund-exposure-panel.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/revenue-by-country.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/revenue-chart.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/stat-cards.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "app/components/instructor-analytics/top-buyers.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/lesson/curriculum-sidebar.tsx": {
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/components/lesson/full-lesson.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    },
+    "@typescript-eslint/no-floating-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 5
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "react/no-danger": {
+      "count": 1
+    }
+  },
+  "app/components/lesson/lesson-completion.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/lesson/lesson-pager.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/lesson/locked-lesson.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/lesson/quiz-results.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/lesson/quiz-section.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/lesson/use-autoplay.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "app/components/monaco-markdown-editor.tsx": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-misused-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 5
+    },
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/components/notification-feed.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 4
+    },
+    "@typescript-eslint/no-floating-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/unbound-method": {
+      "count": 3
+    },
+    "jsx-a11y/click-events-have-key-events": {
+      "count": 1
+    },
+    "jsx-a11y/no-static-element-interactions": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 3
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
+  "app/components/quiz-builder/answers-step.tsx": {
+    "id-denylist": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/components/quiz-builder/questions-step.tsx": {
+    "id-denylist": {
+      "count": 4
+    },
+    "max-lines-per-function": {
+      "count": 4
+    }
+  },
+  "app/components/quiz-builder/review-step.tsx": {
+    "id-denylist": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "react/no-array-index-key": {
+      "count": 1
+    }
+  },
+  "app/components/quiz-builder/settings-step.tsx": {
+    "id-denylist": {
+      "count": 4
+    }
+  },
+  "app/components/sidebar.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-empty": {
+      "count": 1
+    }
+  },
+  "app/components/star-rating.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/components/ui/chart.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "no-restricted-syntax": {
+      "count": 1
+    },
+    "react/no-danger": {
+      "count": 1
+    }
+  },
+  "app/components/youtube-player.tsx": {
+    "@typescript-eslint/consistent-type-definitions": {
+      "count": 1
+    },
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-floating-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "jsx-a11y/label-has-associated-control": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/db/index.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    }
+  },
+  "app/lib/bookmarks.server.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/lib/comments.server.test.ts": {
+    "max-lines": {
+      "count": 1
+    }
+  },
+  "app/lib/comments.server.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 4
+    }
+  },
+  "app/lib/country.server.test.ts": {
+    "@typescript-eslint/require-await": {
+      "count": 1
+    }
+  },
+  "app/lib/country.server.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    }
+  },
+  "app/lib/course-detail.server.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/lib/enrollments.server.ts": {
+    "max-params": {
+      "count": 2
+    }
+  },
+  "app/lib/mailer.server.test.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    }
+  },
+  "app/lib/mailer.server.ts": {
+    "@typescript-eslint/require-await": {
+      "count": 1
+    }
+  },
+  "app/lib/notes.server.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/lib/notification-feed.knock.ts": {
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/lib/notification-preferences.server.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/lib/notifications.fake.server.ts": {
+    "@typescript-eslint/require-await": {
+      "count": 6
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/lib/notifications.knock.server.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/lib/notifications.server.ts": {
+    "@typescript-eslint/require-await": {
+      "count": 6
+    },
+    "no-console": {
+      "count": 4
+    }
+  },
+  "app/lib/ppp.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/lib/refund-decisions.server.ts": {
+    "max-lines-per-function": {
+      "count": 3
+    },
+    "max-params": {
+      "count": 3
+    }
+  },
+  "app/lib/refund-eligibility.server.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/lib/refunds.server.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 2
+    }
+  },
+  "app/lib/seat-claims.server.test.ts": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 4
+    }
+  },
+  "app/lib/seat-claims.server.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 2
+    }
+  },
+  "app/lib/session.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    }
+  },
+  "app/lib/utils.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/lib/validation.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    }
+  },
+  "app/modules/course-editor/lib/course-details.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/modules/course-editor/lib/course-settings.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/course-editor/lib/curriculum.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 3
+    }
+  },
+  "app/modules/course-editor/lib/editor-actions.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/modules/course-editor/lib/student-roster.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/instructor-analytics/lib/audience.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 2
+    }
+  },
+  "app/modules/instructor-analytics/lib/country-revenue.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/instructor-analytics/lib/course-progress.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/modules/instructor-analytics/lib/feedback.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 2
+    }
+  },
+  "app/modules/instructor-analytics/lib/instructor-analytics.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/instructor-analytics/lib/quiz-pass-rates.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/instructor-analytics/lib/refund-exposure.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/instructor-analytics/lib/revenue.ts": {
+    "max-params": {
+      "count": 3
+    }
+  },
+  "app/modules/instructor-analytics/lib/scope.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/instructor-analytics/tests/fixtures.ts": {
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 4
+    }
+  },
+  "app/modules/instructor-analytics/tests/panels.test.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/lesson-page/lib/comment-intents.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/lesson-page/lib/course-outline.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/modules/lesson-page/lib/discussion.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/modules/lesson-page/lib/lesson-action.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "max-depth": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/modules/lesson-page/lib/load-lesson-page.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    },
+    "max-depth": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/modules/lesson-page/lib/quiz.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 7
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 8
+    },
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 4
+    },
+    "id-denylist": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 3
+    }
+  },
+  "app/modules/permissions/lib/course-permissions.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "eqeqeq": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/permissions/tests/course-permissions.test.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 5
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/modules/permissions/tests/person.test.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 6
+    },
+    "id-denylist": {
+      "count": 12
+    }
+  },
+  "app/modules/quiz-authoring/lib/quiz-action.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    }
+  },
+  "app/modules/quiz-authoring/lib/quiz-store.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 4
+    }
+  },
+  "app/root.tsx": {
+    "react/no-danger": {
+      "count": 1
+    }
+  },
+  "app/routes/admin.categories.tsx": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 12
+    },
+    "id-denylist": {
+      "count": 21
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 4
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "react/no-array-index-key": {
+      "count": 1
+    }
+  },
+  "app/routes/admin.courses.tsx": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "react/no-array-index-key": {
+      "count": 1
+    }
+  },
+  "app/routes/admin.refunds.tsx": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/routes/admin.users.tsx": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    },
+    "id-denylist": {
+      "count": 8
+    },
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    },
+    "react/no-array-index-key": {
+      "count": 1
+    }
+  },
+  "app/routes/courses.$slug.$moduleId.tsx": {
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 4
+    },
+    "react/no-array-index-key": {
+      "count": 1
+    }
+  },
+  "app/routes/courses.$slug.purchase.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 2
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 3
+    },
+    "max-params": {
+      "count": 3
+    }
+  },
+  "app/routes/courses.$slug.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "react/no-danger": {
+      "count": 1
+    }
+  },
+  "app/routes/courses.$slug.welcome.tsx": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/routes/courses.tsx": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 5
+    },
+    "max-params": {
+      "count": 1
+    },
+    "react/no-array-index-key": {
+      "count": 2
+    }
+  },
+  "app/routes/dashboard.tsx": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 3
+    },
+    "react/no-array-index-key": {
+      "count": 1
+    }
+  },
+  "app/routes/home.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-empty": {
+      "count": 1
+    },
+    "no-empty-pattern": {
+      "count": 1
+    }
+  },
+  "app/routes/instructor.$courseId.lessons.$lessonId.quiz.tsx": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/routes/instructor.$courseId.lessons.$lessonId.tsx": {
+    "@typescript-eslint/no-floating-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 8
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/routes/instructor.$courseId.modules.$moduleId.tsx": {
+    "max-lines-per-function": {
+      "count": 3
+    },
+    "react/no-array-index-key": {
+      "count": 1
+    }
+  },
+  "app/routes/instructor.$courseId.students.tsx": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 4
+    }
+  },
+  "app/routes/instructor.$courseId.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/routes/instructor.analytics.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/routes/instructor.new.tsx": {
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "app/routes/instructor.questions.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "react/no-danger": {
+      "count": 1
+    }
+  },
+  "app/routes/instructor.tsx": {
+    "@typescript-eslint/no-unsafe-enum-comparison": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "react/no-array-index-key": {
+      "count": 1
+    }
+  },
+  "app/routes/layout.app.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/routes/login.tsx": {
+    "@typescript-eslint/no-base-to-string": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/routes/redeem.$code.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/routes/saved.tsx": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/routes/settings.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    },
+    "@typescript-eslint/no-misused-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    },
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "app/routes/signup.tsx": {
+    "@typescript-eslint/no-base-to-string": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/routes/team.tsx": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-floating-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 9
+    },
+    "max-lines-per-function": {
+      "count": 3
+    }
+  },
+  "request-logger/agents/custom-base-url.test.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "request-logger/agents/custom-target-templates.test.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 7
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "request-logger/agents/custom-target.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "request-logger/agents/junie.test.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "request-logger/agents/omp.test.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "request-logger/agents/reading.ts": {
+    "eqeqeq": {
+      "count": 1
+    }
+  },
+  "request-logger/agents/resolve.ts": {
+    "eqeqeq": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "request-logger/config-wizard.test.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 9
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 12
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 3
+    },
+    "@typescript-eslint/require-await": {
+      "count": 5
+    }
+  },
+  "request-logger/config.test.ts": {
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 2
+    }
+  },
+  "request-logger/config.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 5
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 10
+    },
+    "id-denylist": {
+      "count": 4
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 5
+    }
+  },
+  "request-logger/model-discovery.test.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 1
+    },
+    "@typescript-eslint/prefer-promise-reject-errors": {
+      "count": 1
+    }
+  },
+  "request-logger/model-discovery.ts": {
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    }
+  },
+  "request-logger/proxy.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 3
+    }
+  },
+  "request-logger/proxy.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "id-denylist": {
+      "count": 28
+    },
+    "max-lines-per-function": {
+      "count": 4
+    },
+    "no-console": {
+      "count": 36
+    }
+  },
+  "request-logger/proxy/burst-guard.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 2
+    }
+  },
+  "request-logger/proxy/terminal.ts": {
+    "no-console": {
+      "count": 20
+    }
+  },
+  "request-logger/proxy/upstream.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    }
+  },
+  "request-logger/render.test.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    }
+  },
+  "request-logger/render.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "eqeqeq": {
+      "count": 2
+    },
+    "id-denylist": {
+      "count": 4
+    }
+  },
+  "request-logger/render/anthropic-content.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 15
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    }
+  },
+  "request-logger/render/anthropic.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 7
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 32
+    },
+    "eqeqeq": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "request-logger/render/body.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 2
+    }
+  },
+  "request-logger/render/gemini.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 9
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 13
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 60
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    },
+    "eqeqeq": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 2
+    },
+    "max-depth": {
+      "count": 4
+    }
+  },
+  "request-logger/render/messages.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    },
+    "id-denylist": {
+      "count": 5
+    }
+  },
+  "request-logger/render/openai.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 9
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 16
+    },
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 77
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 9
+    },
+    "max-depth": {
+      "count": 3
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "request-logger/render/shared.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 11
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 3
+    }
+  },
+  "scripts/push-knock-workflows.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    },
+    "id-denylist": {
+      "count": 4
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 3
+    }
+  },
+  "scripts/screenshot.mjs": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 2
+    }
+  },
+  "scripts/seed/categories.ts": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/courses/design-systems-with-tailwind.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/courses/docker-and-kubernetes.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/courses/introduction-to-typescript.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/courses/practical-data-visualisation.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/courses/rest-apis-with-nodejs.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/enrollments-and-ratings.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 2
+    }
+  },
+  "scripts/seed/generated-history.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/lesson-comments.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/lesson-progress.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/purchases-and-teams.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 2
+    }
+  },
+  "scripts/seed/quiz-attempts.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/quizzes.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/refund-requests.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 2
+    }
+  },
+  "scripts/seed/summary.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 15
+    }
+  },
+  "scripts/seed/team-licences.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    },
+    "max-params": {
+      "count": 1
+    }
+  },
+  "scripts/seed/users.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/seed/watch-events.ts": {
+    "@typescript-eslint/naming-convention": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 2
+    },
+    "no-console": {
+      "count": 1
+    }
+  },
+  "scripts/sync-users-to-knock.ts": {
+    "no-console": {
+      "count": 2
+    }
+  }
+}
