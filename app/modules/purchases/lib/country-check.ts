@@ -6,7 +6,7 @@ import {
   purchases,
   refunds,
 } from "~/db/schema";
-import type { Db } from "./buy";
+import type { Db } from "./db";
 import { purchasingPowerPrice } from "./purchasing-power-price";
 
 /**
@@ -57,7 +57,6 @@ export function countryCheck(
     .orderBy(desc(purchases.createdAt), desc(purchases.id))
     .get();
   if (!course || !purchase?.country || !country) return { blocked: false };
-  // Full price carries no restriction.
   if (purchasingPowerPrice(course, purchase.country) >= course.price) {
     return { blocked: false };
   }

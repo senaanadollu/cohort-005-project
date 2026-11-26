@@ -31,7 +31,11 @@ import { data } from "react-router";
 import { formatDuration, formatPrice } from "~/lib/utils";
 import { resolveCountry } from "~/lib/country.server";
 import { getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
-import { purchases as purchasesModule } from "~/modules/purchases/index.server";
+import {
+  purchases,
+  type PurchaseRefusal,
+  type TeamLicenceRefusal,
+} from "~/modules/purchases/index.server";
 import { parseFormData, parseParams } from "~/lib/validation";
 import { isEnrolled } from "~/lib/enrollments.server";
 import { defaultNotifications } from "~/lib/notifications.server";
@@ -187,7 +191,7 @@ export async function loader({ params, request, url }: Route.LoaderArgs) {
   );
 
   const country = await resolveCountry(request);
-  const pppPrice = purchasesModule.purchasingPowerPrice(courseWithDetails, country);
+  const purchasingPowerPrice = purchases.purchasingPowerPrice(courseWithDetails, country);
   const tierInfo = getCountryTierInfo(country);
   const countryName = country
     ? (COUNTRIES.find((c) => c.code === country)?.name ?? country)
@@ -198,7 +202,7 @@ export async function loader({ params, request, url }: Route.LoaderArgs) {
     lessonCount,
     enrollmentCount,
     totalDuration,
-    pppPrice,
+    purchasingPowerPrice,
     tierInfo,
     country,
     countryName,
@@ -230,37 +234,37 @@ export async function action({ params, request }: Route.ActionArgs) {
   const now = new Date();
 
   if (parsed.data.intent === "confirm-purchase") {
-    const bought = await purchasesModule.buyIndividualPurchase(
+    const bought = await purchases.buyIndividualPurchase(
       currentUserId,
       course.id,
       country,
       now,
       await defaultNotifications()
     );
-    if (!bought.ok) {
-      if (bought.reason === "already_enrolled") {
-        throw redirect(`/courses/${slug}`);
-      }
-      throw data("Course not found.", { status: 404 });
-    }
+    if (!bought.ok) refuse(slug, bought.reason);
     throw redirect(`/courses/${slug}/welcome`);
   }
 
-  // Team Licence — the Team Admin does NOT get enrolled themselves
-  const bought = await purchasesModule.buyTeamLicence(
+  const bought = await purchases.buyTeamLicence(
     currentUserId,
     course.id,
     parsed.data.quantity,
     country,
     now
   );
-  if (!bought.ok) {
-    if (bought.reason === "invalid_seat_count") {
-      throw data("Invalid action.", { status: 400 });
-    }
-    throw data("Course not found.", { status: 404 });
-  }
+  if (!bought.ok) refuse(slug, bought.reason);
   throw redirect(`/team`);
+}
+
+function refuse(
+  slug: string,
+  reason: PurchaseRefusal | TeamLicenceRefusal
+): never {
+  if (reason === "already_enrolled") throw redirect(`/courses/${slug}`);
+  if (reason === "invalid_seat_count") {
+    throw data("Invalid action.", { status: 400 });
+  }
+  throw data("Course not found.", { status: 404 });
 }
 
 export default function PurchaseConfirmation({
@@ -271,7 +275,7 @@ export default function PurchaseConfirmation({
     lessonCount,
     enrollmentCount,
     totalDuration,
-    pppPrice,
+    purchasingPowerPrice,
     tierInfo,
     countryName,
     isEnrolled,
@@ -289,8 +293,8 @@ export default function PurchaseConfirmation({
     }
   }, [fetcher.state, fetcher.data]);
 
-  const isDiscounted = pppPrice < course.price;
-  const teamTotal = pppPrice * quantity;
+  const isDiscounted = purchasingPowerPrice < course.price;
+  const teamTotal = purchasingPowerPrice * quantity;
 
   return (
     <div className="mx-auto max-w-3xl p-6 lg:p-8">
@@ -395,7 +399,7 @@ export default function PurchaseConfirmation({
                               Your price
                             </span>
                             <div className="text-3xl font-bold">
-                              {formatPrice(pppPrice)}
+                              {formatPrice(purchasingPowerPrice)}
                             </div>
                           </>
                         ) : (
@@ -404,7 +408,7 @@ export default function PurchaseConfirmation({
                               Total
                             </span>
                             <div className="text-3xl font-bold">
-                              {formatPrice(pppPrice)}
+                              {formatPrice(purchasingPowerPrice)}
                             </div>
                           </>
                         )}
@@ -463,7 +467,7 @@ export default function PurchaseConfirmation({
                     {/* Price breakdown */}
                     <div>
                       <div className="text-sm text-muted-foreground">
-                        {formatPrice(pppPrice)} &times; {quantity}{" "}
+                        {formatPrice(purchasingPowerPrice)} &times; {quantity}{" "}
                         {quantity === 1 ? "seat" : "seats"}
                       </div>
                       <div className="text-3xl font-bold">

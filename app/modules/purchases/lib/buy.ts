@@ -1,7 +1,5 @@
 import crypto from "crypto";
 import { and, eq } from "drizzle-orm";
-import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import * as schema from "~/db/schema";
 import {
   CourseStatus,
   TeamMemberRole,
@@ -18,9 +16,9 @@ import {
   notifyInstructorOfEnrollment,
 } from "~/lib/enrollments.server";
 import type { Notifications } from "~/lib/notifications.server";
+import type { Db } from "./db";
 import { purchasingPowerPrice } from "./purchasing-power-price";
 
-export type Db = BetterSQLite3Database<typeof schema>;
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 type Purchase = typeof purchases.$inferSelect;
@@ -84,7 +82,6 @@ export async function buyTeamLicence(
   country: string | null,
   now: Date
 ): Promise<TeamLicenceResult> {
-  // At least one Seat, with no maximum.
   if (!Number.isInteger(seats) || seats < 1) {
     return { ok: false, reason: "invalid_seat_count" };
   }

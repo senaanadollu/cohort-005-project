@@ -1,6 +1,4 @@
 import { db } from "~/db";
-import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
-import type * as schema from "~/db/schema";
 import {
   purchasingPowerPrice,
   type PricedCourse,
@@ -13,6 +11,7 @@ import {
 } from "./lib/buy";
 import { countryCheck, type CountryCheck } from "./lib/country-check";
 import type { Notifications } from "~/lib/notifications.server";
+import type { Db } from "./lib/db";
 
 export type { PricedCourse } from "./lib/purchasing-power-price";
 export type { CountryCheck } from "./lib/country-check";
@@ -23,8 +22,6 @@ export type {
   TeamLicenceResult,
 } from "./lib/buy";
 
-type Db = BetterSQLite3Database<typeof schema>;
-
 /**
  * Purchases bound to a database. The app uses `purchases`, which reads the
  * app database; tests build their own against a test database.
@@ -32,12 +29,9 @@ type Db = BetterSQLite3Database<typeof schema>;
 export function createPurchases(database: Db) {
   return {
     /**
-     * What a course costs a buyer in `country`, in whole cents.
-     *
-     * The full price when the course has purchasing-power pricing switched
-     * off or the country is unknown (`null`, ADR 0012); otherwise the price
-     * discounted for the country's tier, rounded once (ADR 0005). Reads no
-     * database: pass the course values you already hold.
+     * What a course costs a buyer in `country`, in whole cents, rounded once
+     * (ADR 0005). An unknown country (`null`) pays the full price (ADR 0012).
+     * Reads no database: pass the course values you already hold.
      */
     purchasingPowerPrice(course: PricedCourse, country: string | null) {
       return purchasingPowerPrice(course, country);
@@ -46,13 +40,8 @@ export function createPurchases(database: Db) {
     /**
      * Records an Individual Purchase and the Enrollment it grants, together
      * or not at all, then tells the course's Instructor. A Notification
-     * failure is logged and never fails the purchase.
-     *
-     * The charge is the course's Purchasing-Power Price for `country`, read
-     * inside the transaction. `country` (or `null` when unknown) and `now`
-     * are stamped on the Purchase; the Enrollment starts at `now` too.
-     * Refused with nothing recorded when the course does not exist, is not
-     * Published, or the Student is already enrolled.
+     * failure is logged and never fails the purchase. The charge is read
+     * inside the transaction, never taken from the caller.
      */
     buyIndividualPurchase(
       studentId: number,
@@ -72,14 +61,9 @@ export function createPurchases(database: Db) {
     },
 
     /**
-     * Records a Team Licence of `seats` Seats, the Team Admin's team (found,
-     * or created with the buyer as its Team Admin) and every Seat, together
-     * or not at all. The buyer gets no Enrollment, so nothing is sent; an
+     * Records a Team Licence, the Team Admin's team and its Seats, together
+     * or not at all. The buyer gets no Enrollment, so nothing is sent, and an
      * enrolled buyer may still buy one.
-     *
-     * The charge is the per-Seat Purchasing-Power Price for `country` times
-     * `seats`. Refused with nothing recorded when the course does not exist,
-     * is not Published, or `seats` is not a whole number of at least 1.
      */
     buyTeamLicence(
       teamAdminId: number,
@@ -93,16 +77,10 @@ export function createPurchases(database: Db) {
 
     /**
      * Whether a Student is blocked from playing a course in `country`, the
-     * country they are in now (`null` when unknown). Reads the Student's
-     * standing Individual Purchase only: bought by them, granting no Seats,
-     * with no Approved Refund Request; the newest if there are several.
-     *
-     * Blocked only when that Purchase was made at a Purchasing-Power Price
-     * below the full price, in a country other than `country` (ADR 0009).
-     * Never blocked when there is no such Purchase (a Student enrolled
-     * through a Claimed Seat, ADR 0013), the Purchase has no country, the
-     * course has purchasing-power pricing switched off, or `country` is
-     * unknown. The staff exemption is the caller's to apply.
+     * country they are in now (ADR 0009). Only the Student's newest standing
+     * Individual Purchase counts, so a Student enrolled through a Claimed
+     * Seat is never blocked (ADR 0013). The staff exemption is the caller's
+     * to apply.
      */
     countryCheck(
       studentId: number,
