@@ -3,10 +3,14 @@
 Do these checks in this order before you report a change to `app/` as complete:
 
 1. `npm run typecheck`
-2. `npm run lint:boundaries`
-3. `npm run test`
+2. `npm run lint`
+3. `npm run lint:boundaries`
+4. `npm run format:check`
+5. `npm run test`
 
-Or run all three with `npm run check`.
+Or run all five with `npm run check`.
+
+The pre-commit hook (`.husky/pre-commit`) runs only the fast checks on staged files: Prettier and the 5000-token file limit. It does not replace `npm run check`.
 
 Modules are deep modules: see [app/modules/README.md](./app/modules/README.md) before adding or importing one.
 
